@@ -115,21 +115,6 @@ function Rig({ phase }: { phase: Phase }) {
   return null;
 }
 
-/** Wall frame: the photo already contains the wooden frame, so it covers the whole front face. */
-function Frame({ p, w, img }: { p: [number, number]; w: number; img: string }) {
-  const h = w * (640 / 460);
-  const tex = photo(img);
-  return (
-    <group position={[p[0], p[1], 0.012]}>
-      <B p={[0, 0, 0]} s={[w, h, 0.02]} c="#22150f" rough={0.6} />
-      <mesh position={[0, 0, 0.0105]}>
-        <planeGeometry args={[w, h]} />
-        <meshStandardMaterial map={tex} emissiveMap={tex} emissive="#ffffff" emissiveIntensity={0.35} roughness={0.55} />
-      </mesh>
-    </group>
-  );
-}
-
 function Shelf({ p, w }: { p: [number, number]; w: number }) {
   return <B p={[p[0], p[1], 0.065]} s={[w, 0.025, 0.13]} c="#4a2f1f" rough={0.7} />;
 }
@@ -371,12 +356,12 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
           { x: 0.22, y: -0.2, c: "#3d4a33" },
         ]}
       />
-      <Frame p={[-1.08, 1.56]} w={0.3} img="slowrush" />
+      <Poster p={[-1.08, 1.56]} w={0.26} img="slowrush" aspect={0.721} />
       <Poster p={[-0.62, 1.98]} w={0.39} img="ram" aspect={0.75} />
-      <Frame p={[-0.08, 2.14]} w={0.3} img="currents" />
+      <Poster p={[-0.08, 2.16]} w={0.25} img="currents" aspect={0.633} />
       <Poster p={[-0.05, 1.5]} w={0.31} img="astroworld" aspect={2 / 3} />
-      <Frame p={[0.3, 1.56]} w={0.2} img="comic" />
-      <Frame p={[1.02, 2.32]} w={0.32} img="arctic" />
+      <Poster p={[0.3, 1.56]} w={0.17} img="comic" aspect={0.72} />
+      <Poster p={[1.02, 2.3]} w={0.28} img="arctic" aspect={0.675} />
       <Tube a={[0.43, 2.0, 0.008]} b={[0.43, 1.2, 0.008]} rad={0.006} c="#efece6" />
       <B p={[0.43, 2.02, 0.012]} s={[0.07, 0.07, 0.015]} c="#efe9d8" />
 
