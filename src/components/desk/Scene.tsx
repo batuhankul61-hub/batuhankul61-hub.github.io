@@ -1,6 +1,6 @@
 "use client";
 
-import { ContactShadows, Environment, Lightformer, SoftShadows } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer, PerformanceMonitor, SoftShadows } from "@react-three/drei";
 import { Bloom, EffectComposer, N8AO, SMAA, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
@@ -69,7 +69,7 @@ const tmpTmp = new THREE.Vector3();
 const UP_AXIS = new THREE.Vector3(0, 1, 0);
 
 function Rig({ phase }: { phase: Phase }) {
-  const { camera, size, pointer } = useThree();
+  const { camera, size, pointer, invalidate } = useThree();
   const look = useRef(new THREE.Vector3(...VIEWS.intro.target));
   const first = useRef(true);
   const reduced = useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches, []);
@@ -106,12 +106,24 @@ function Rig({ phase }: { phase: Phase }) {
       tmpPos.x += pointer.x * 0.14;
       tmpPos.y += pointer.y * 0.06;
     }
-    const k = first.current || reduced ? 1 : 1 - Math.exp(-dt * 2.6);
+    // dt is capped so the first frame after an idle stretch doesn't snap the camera.
+    const k = first.current || reduced ? 1 : 1 - Math.exp(-Math.min(dt, 0.05) * 2.6);
     first.current = false;
     cam.position.lerp(tmpPos, k);
     look.current.lerp(tmpTgt, k);
     cam.lookAt(look.current);
+    // The canvas renders on demand: ask for another frame until the camera has settled.
+    if (cam.position.distanceToSquared(tmpPos) > 1e-8 || look.current.distanceToSquared(tmpTgt) > 1e-8) invalidate();
   });
+
+  // New target view, or the pointer moved the overview parallax: wake the render loop.
+  useEffect(() => invalidate(), [phase, invalidate]);
+  useEffect(() => {
+    if (phase !== "overview") return;
+    const wake = () => invalidate();
+    window.addEventListener("pointermove", wake);
+    return () => window.removeEventListener("pointermove", wake);
+  }, [phase, invalidate]);
   return null;
 }
 
@@ -235,6 +247,8 @@ const tmpDot = new THREE.Vector3();
 /** Keeps the DOM hotspot markers glued to their 3D anchors. */
 function DotTracker({ refs }: { refs: DotRefs }) {
   useFrame(({ camera, size }) => {
+    // Rig moved the camera this frame; refresh its matrices so the dots don't trail a frame behind.
+    camera.updateMatrixWorld();
     for (const [spot, p] of DOTS) {
       const el = refs.current[spot];
       if (!el) continue;
@@ -257,14 +271,13 @@ type RoomProps = {
 
 type HoverProps = { hover: SpotId | null; setHover: React.Dispatch<React.SetStateAction<SpotId | null>> };
 
-function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, setHover }: RoomProps & HoverProps) {
+function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, setHover, lowShadows }: RoomProps & HoverProps & { lowShadows: boolean }) {
   const wood = useMemo(() => {
     const t = photo("wood");
     t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping;
     t.repeat.set(1, 3);
     return t;
   }, []);
-  const neonRef = useRef<THREE.PointLight>(null);
   const rootRef = useRef<THREE.Group>(null);
 
   // Every lit, opaque mesh casts and receives shadows; click targets and glowing parts stay out.
@@ -290,10 +303,6 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
   useEffect(() => {
     if (!interactive) setHover(null);
   }, [interactive, setHover]);
-
-  useFrame(({ clock }) => {
-    if (neonRef.current) neonRef.current.intensity = 0.9 + Math.sin(clock.elapsedTime * 2.3) * 0.04;
-  });
 
   const api: SpotApi = { interactive, hover, setHover, onSelect, labels };
 
@@ -521,7 +530,7 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
           return <Tube key={i} a={[pt[0], pt[1], 0]} b={[n[0], n[1], 0]} rad={0.011} c="#ff9d1c" e="#ff9416" ei={1.15} />;
         })}
       </group>
-      <pointLight ref={neonRef} position={[1.08, 1.1, 0.16]} color="#ff9a2e" intensity={0.9} distance={1.1} decay={2} />
+      <pointLight position={[1.08, 1.1, 0.16]} color="#ff9a2e" intensity={0.9} distance={1.1} decay={2} />
 
       {/* Pegboard with controllers */}
       <group position={[1.1, 1.74, 0.025]}>
@@ -583,7 +592,7 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
         intensity={1.1}
         color="#fff0dc"
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={lowShadows ? [1024, 1024] : [2048, 2048]}
         shadow-bias={-0.0003}
         shadow-normalBias={0.015}
         shadow-camera-left={-2.2}
@@ -605,27 +614,48 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
 /** Reports once the first frames are on screen (shader compile can take a moment). */
 function Ready({ onReady }: { onReady: () => void }) {
   const n = useRef(0);
-  useFrame(() => {
-    if (++n.current === 2) onReady();
+  useFrame(({ invalidate }) => {
+    n.current += 1;
+    if (n.current === 2) onReady();
+    else if (n.current < 2) invalidate();
   });
   return null;
+}
+
+/** Phones, tablets and low-core machines start on the light settings; the monitor can still drop a desktop to them. */
+function startsLow() {
+  const coarse = window.matchMedia("(pointer: coarse)").matches;
+  const cores = navigator.hardwareConcurrency ?? 8;
+  return coarse || cores <= 4 || Math.min(window.innerWidth, window.innerHeight) < 600;
 }
 
 export default function Scene(props: RoomProps & { phase: Phase; onReady: () => void }) {
   const { phase, onReady, ...room } = props;
   const [hover, setHover] = useState<SpotId | null>(null);
   const dotRefs: DotRefs = useRef({});
+  // The shadow map is allocated once, so its size follows the starting tier only.
+  const [initialLow] = useState(startsLow);
+  const [low, setLow] = useState(initialLow);
+  const maxDpr = Math.min(window.devicePixelRatio || 1, low ? 1.5 : 2);
+  const [dpr, setDpr] = useState(maxDpr);
   return (
     <>
       <Canvas
-        dpr={[1, 2]}
+        dpr={Math.min(dpr, maxDpr)}
         shadows
         flat
+        frameloop="demand"
         camera={{ fov: 50, near: 0.05, far: 30, position: [0.8, 1.7, 4.5] }}
         gl={{ antialias: false, powerPreference: "high-performance" }}
       >
+        <PerformanceMonitor
+          flipflops={3}
+          onChange={({ factor }) => setDpr(Math.round((1 + (maxDpr - 1) * factor) * 4) / 4)}
+          onDecline={() => setLow(true)}
+          onFallback={() => setLow(true)}
+        />
         <color attach="background" args={["#0a0a0c"]} />
-        <SoftShadows size={18} samples={12} focus={0.6} />
+        {!low && <SoftShadows size={18} samples={12} focus={0.6} />}
         <Environment resolution={256} frames={1} environmentIntensity={0.55}>
           {/* A soft "room" for reflections: big window light, ceiling panel, warm bounce. */}
           <Lightformer form="rect" intensity={3} color="#fff4e6" position={[-2, 2, 4]} scale={[4, 2, 1]} target={[0, 1, 0]} />
@@ -634,9 +664,9 @@ export default function Scene(props: RoomProps & { phase: Phase; onReady: () => 
           <Lightformer form="ring" intensity={2} color="#ffbe6b" position={[1, 1.2, -1]} scale={1} target={[0, 1, 0]} />
         </Environment>
         <Rig phase={phase} />
-        <Room {...room} hover={hover} setHover={setHover} />
+        <Room {...room} hover={hover} setHover={setHover} lowShadows={initialLow} />
         <EffectComposer multisampling={0} enableNormalPass={false}>
-          <N8AO aoRadius={0.12} distanceFalloff={0.6} intensity={2.2} quality="high" halfRes />
+          <N8AO aoRadius={0.12} distanceFalloff={0.6} intensity={2.2} quality={low ? "performance" : "high"} halfRes />
           <Bloom mipmapBlur luminanceThreshold={0.85} luminanceSmoothing={0.2} intensity={0.45} radius={0.7} />
           <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
           <Vignette offset={0.25} darkness={0.55} />

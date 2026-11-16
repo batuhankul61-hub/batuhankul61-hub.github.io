@@ -99,6 +99,7 @@ export const deskText = {
     projectsFolder: "Projeler",
     shutdown: "Masaya dön",
     credits: "3D model teşekkürleri",
+    noWebgl: "Bu tarayıcı 3D odayı açamadı. Aynı içerik klasik sitede de var.",
   },
   en: {
     welcome: "Welcome to my desk",
@@ -118,6 +119,7 @@ export const deskText = {
     projectsFolder: "Projects",
     shutdown: "Back to desk",
     credits: "3D model credits",
+    noWebgl: "This browser couldn't open the 3D room. Everything here is on the classic site too.",
   },
 } as const;
 

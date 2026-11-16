@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Component, type ReactNode, useEffect, useMemo, useState } from "react";
 import { deskPaths, deskText, modelCredits, type SpotId, spotifyUrl, spots } from "@/content/desk";
 import models from "@/content/models.json";
 import { projects } from "@/content/projects";
@@ -12,6 +12,26 @@ import type { Phase } from "./Scene";
 import "./desk.css";
 
 const Scene = dynamic(() => import("./Scene"), { ssr: false });
+
+/** Catches a WebGL context or shader failure so the page shows a way out instead of a frozen loader. */
+class SceneBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
+}
+
+function hasWebGL() {
+  try {
+    const c = document.createElement("canvas");
+    return Boolean(c.getContext("webgl2") ?? c.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
 const credits = modelCredits(models);
 
 export function DeskExperience({ lang }: { lang: Lang }) {
@@ -20,6 +40,11 @@ export function DeskExperience({ lang }: { lang: Lang }) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [osOpen, setOsOpen] = useState(false);
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!hasWebGL()) setFailed(true);
+  }, []);
 
   // Let the camera reach the monitor before the desktop fades in.
   useEffect(() => {
@@ -58,17 +83,29 @@ export function DeskExperience({ lang }: { lang: Lang }) {
   return (
     <div className="desk-root">
       <div className="desk-canvas">
-        <Scene
-          phase={phase}
-          interactive={phase === "overview"}
-          labels={labels}
-          screenTitle={site.name}
-          screenIcons={icons}
-          onSelect={setPhase}
-          onReady={() => setReady(true)}
-        />
+        {!failed && (
+          <SceneBoundary fallback={<FailFlag onFail={() => setFailed(true)} />}>
+            <Scene
+              phase={phase}
+              interactive={phase === "overview"}
+              labels={labels}
+              screenTitle={site.name}
+              screenIcons={icons}
+              onSelect={setPhase}
+              onReady={() => setReady(true)}
+            />
+          </SceneBoundary>
+        )}
       </div>
-      {!ready && (
+      {failed ? (
+        <section className="desk-intro" role="alert">
+          <p className="desk-kicker">{site.name}</p>
+          <p>{d.noWebgl}</p>
+          <Link href={paths[lang].home} className="btn btn-primary">
+            {d.classic}
+          </Link>
+        </section>
+      ) : !ready && (
         <p className="desk-loading" role="status">
           {d.loading}…
         </p>
@@ -83,7 +120,7 @@ export function DeskExperience({ lang }: { lang: Lang }) {
         </Link>
       </header>
 
-      {phase === "intro" && (
+      {phase === "intro" && !failed && (
         <section className="desk-intro">
           <p className="desk-kicker">{site.name}</p>
           <h1>{d.welcome}</h1>
@@ -148,4 +185,10 @@ export function DeskExperience({ lang }: { lang: Lang }) {
       {phase === "pc" && osOpen && <DesktopOS lang={lang} onClose={() => setPhase("overview")} />}
     </div>
   );
+}
+
+/** Rendered by the error boundary: flips the page into its no-WebGL state. */
+function FailFlag({ onFail }: { onFail: () => void }) {
+  useEffect(onFail, [onFail]);
+  return null;
 }

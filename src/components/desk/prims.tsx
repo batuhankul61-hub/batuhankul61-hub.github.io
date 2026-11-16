@@ -1,5 +1,6 @@
 "use client";
 
+import { invalidate } from "@react-three/fiber";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { grainTexture } from "./textures";
@@ -125,7 +126,8 @@ const photoCache = new Map<string, THREE.Texture>();
 export function photo(name: string) {
   let t = photoCache.get(name);
   if (!t) {
-    t = new THREE.TextureLoader().load(`/desk/${name}.jpg`);
+    // The canvas renders on demand, so ask for a frame once the image arrives.
+    t = new THREE.TextureLoader().load(`/desk/${name}.jpg`, () => invalidate());
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 8;
     photoCache.set(name, t);
