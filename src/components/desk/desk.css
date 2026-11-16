@@ -23,6 +23,7 @@
 .desk-canvas {
   position: absolute;
   inset: 0;
+  touch-action: none;
 }
 
 .desk-loading {
@@ -118,7 +119,10 @@
   backdrop-filter: blur(10px);
   color: var(--text-dim);
   font-size: 13px;
-  white-space: nowrap;
+  text-align: center;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
 }
 
 /* Hotspot markers, rendered inside the canvas overlay */

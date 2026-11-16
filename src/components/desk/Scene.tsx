@@ -68,11 +68,192 @@ const tmpOff = new THREE.Vector3();
 const tmpTmp = new THREE.Vector3();
 const UP_AXIS = new THREE.Vector3(0, 1, 0);
 
+/* Free look in the overview: orbit around a target, zoom toward the cursor, double-click to face a surface. */
+type Free = { on: boolean; target: THREE.Vector3; yaw: number; pitch: number; dist: number };
+const YAW = [-1.62, 1.1] as const;
+const PITCH = [-0.55, 0.95] as const;
+const MIN_DIST = 0.32;
+const ROOM_MIN = new THREE.Vector3(-4.3, 0.22, 0.2);
+const ROOM_MAX = new THREE.Vector3(1.36, 2.55, 6);
+const TARGET_MIN = new THREE.Vector3(-1.7, 0.3, 0);
+const TARGET_MAX = new THREE.Vector3(1.45, 2.45, 1.4);
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const tmpN = new THREE.Vector3();
+const homeTgt = new THREE.Vector3();
+const homeOff = new THREE.Vector3();
+
+/** Shared with the click targets so a drag that ends on a hotspot doesn't open it. */
+export const dragState = { moved: false, pending: 0 as ReturnType<typeof setTimeout> | 0 };
+
+function offsetOf(f: Free, out: THREE.Vector3) {
+  const c = Math.cos(f.pitch);
+  return out.set(Math.sin(f.yaw) * c, Math.sin(f.pitch), Math.cos(f.yaw) * c).multiplyScalar(f.dist);
+}
+
+function clampFree(f: Free, maxDist: number) {
+  f.yaw = THREE.MathUtils.clamp(f.yaw, YAW[0], YAW[1]);
+  f.pitch = THREE.MathUtils.clamp(f.pitch, PITCH[0], PITCH[1]);
+  f.dist = THREE.MathUtils.clamp(f.dist, MIN_DIST, maxDist);
+  f.target.clamp(TARGET_MIN, TARGET_MAX);
+}
+
 function Rig({ phase }: { phase: Phase }) {
-  const { camera, size, pointer, invalidate } = useThree();
+  const { camera, size, pointer, invalidate, gl, scene } = useThree();
   const look = useRef(new THREE.Vector3(...VIEWS.intro.target));
   const first = useRef(true);
   const reduced = useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches, []);
+  const free = useRef<Free>({ on: false, target: new THREE.Vector3(), yaw: 0, pitch: 0, dist: 1 });
+  const home = useRef({ yaw: 0, pitch: 0, dist: 1, maxDist: 3 });
+  const keys = useRef(new Set<string>());
+
+  // Leaving or re-entering the overview starts from the framed home view again.
+  useEffect(() => {
+    free.current.on = false;
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase !== "overview") return;
+    const el = gl.domElement;
+    const f = free.current;
+    const pts = new Map<number, { x: number; y: number }>();
+    let pinch = 0;
+    let travel = 0;
+
+    const begin = () => {
+      if (f.on) return;
+      f.on = true;
+      f.target.copy(homeTgt);
+      f.yaw = home.current.yaw;
+      f.pitch = home.current.pitch;
+      f.dist = home.current.dist;
+    };
+    const hit = (cx: number, cy: number) => {
+      const r = el.getBoundingClientRect();
+      ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      return ray.intersectObjects(scene.children, true).find((h) => h.face && (h.object as THREE.Mesh).isMesh);
+    };
+    /** Zoom by `ratio`, keeping the point under the cursor fixed; zooming out drifts back home. */
+    const zoom = (ratio: number, cx?: number, cy?: number) => {
+      begin();
+      const old = f.dist;
+      const next = THREE.MathUtils.clamp(old * ratio, MIN_DIST, home.current.maxDist);
+      if (next < old && cx !== undefined && cy !== undefined) {
+        const h = hit(cx, cy);
+        if (h) f.target.lerp(h.point, 1 - next / old);
+      } else if (next > old) {
+        const t = (next - old) / Math.max(home.current.maxDist - old, 1e-3);
+        f.target.lerp(homeTgt, t);
+        f.yaw += (home.current.yaw - f.yaw) * t;
+        f.pitch += (home.current.pitch - f.pitch) * t;
+      }
+      f.dist = next;
+      clampFree(f, home.current.maxDist);
+      invalidate();
+    };
+    const rotate = (dx: number, dy: number) => {
+      begin();
+      const s = 2.4 / Math.max(size.height, 1);
+      f.yaw -= dx * s;
+      f.pitch += dy * s;
+      clampFree(f, home.current.maxDist);
+      invalidate();
+    };
+
+    const down = (e: PointerEvent) => {
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 1) {
+        travel = 0;
+        dragState.moved = false;
+      }
+      if (pts.size === 2) {
+        const [a, b] = [...pts.values()];
+        pinch = Math.hypot(a.x - b.x, a.y - b.y);
+      }
+    };
+    const move = (e: PointerEvent) => {
+      const p = pts.get(e.pointerId);
+      if (!p) return;
+      const dx = e.clientX - p.x;
+      const dy = e.clientY - p.y;
+      p.x = e.clientX;
+      p.y = e.clientY;
+      travel += Math.abs(dx) + Math.abs(dy);
+      if (travel > 6) dragState.moved = true;
+      if (pts.size === 1 && dragState.moved) rotate(dx, dy);
+      else if (pts.size === 2) {
+        const [a, b] = [...pts.values()];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (pinch > 0 && d > 0) zoom(pinch / d, (a.x + b.x) / 2, (a.y + b.y) / 2);
+        pinch = d;
+      }
+    };
+    const up = (e: PointerEvent) => {
+      pts.delete(e.pointerId);
+      pinch = 0;
+    };
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+      zoom(Math.exp(THREE.MathUtils.clamp(px, -120, 120) * 0.0022), e.clientX, e.clientY);
+    };
+    /** Double-click a poster (or any surface) to fly up and face it. */
+    const dbl = (e: MouseEvent) => {
+      if (dragState.pending) clearTimeout(dragState.pending);
+      dragState.pending = 0;
+      const h = hit(e.clientX, e.clientY);
+      if (!h?.face) return;
+      begin();
+      tmpN.copy(h.face.normal).transformDirection(h.object.matrixWorld);
+      if (tmpN.dot(ray.ray.direction) > 0) tmpN.negate();
+      f.target.copy(h.point);
+      f.yaw = Math.atan2(tmpN.x, tmpN.z);
+      f.pitch = Math.asin(THREE.MathUtils.clamp(tmpN.y, -1, 1)) * 0.5 + 0.05;
+      f.dist = 0.62;
+      clampFree(f, home.current.maxDist);
+      invalidate();
+    };
+    const keyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, [contenteditable]")) return;
+      const k = e.key.toLowerCase();
+      if (k === "escape" || k === "r" || k === "home") {
+        f.on = false;
+        invalidate();
+        return;
+      }
+      if (["arrowleft", "arrowright", "arrowup", "arrowdown", "a", "d", "w", "s", "q", "e", "+", "-", "="].includes(k)) {
+        if (k.startsWith("arrow")) e.preventDefault();
+        keys.current.add(k);
+        invalidate();
+      }
+    };
+    const keyUp = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
+    const blur = () => keys.current.clear();
+
+    el.addEventListener("pointerdown", down);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    el.addEventListener("wheel", wheel, { passive: false });
+    el.addEventListener("dblclick", dbl);
+    window.addEventListener("keydown", keyDown);
+    window.addEventListener("keyup", keyUp);
+    window.addEventListener("blur", blur);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      el.removeEventListener("wheel", wheel);
+      el.removeEventListener("dblclick", dbl);
+      window.removeEventListener("keydown", keyDown);
+      window.removeEventListener("keyup", keyUp);
+      window.removeEventListener("blur", blur);
+      keys.current.clear();
+      dragState.moved = false;
+    };
+  }, [phase, gl, camera, scene, size.height, invalidate]);
 
   useFrame((_, dt) => {
     const cam = camera as THREE.PerspectiveCamera;
@@ -101,13 +282,48 @@ function Rig({ phase }: { phase: Phase }) {
       const right = tmpTmp.crossVectors(tmpOff, UP_AXIS).normalize().multiplyScalar(-visible * 0.16);
       tmpTgt.add(right);
     }
-    tmpPos.copy(tmpTgt).add(tmpOff);
+    const f = free.current;
     if (phase === "overview") {
+      const len = tmpOff.length();
+      homeTgt.copy(tmpTgt);
+      homeOff.copy(tmpOff);
+      home.current = { yaw: Math.atan2(homeOff.x, homeOff.z), pitch: Math.asin(homeOff.y / len), dist: len, maxDist: len * 1.1 };
+      const held = keys.current;
+      if (held.size) {
+        if (!f.on) {
+          f.on = true;
+          f.target.copy(homeTgt);
+          Object.assign(f, { yaw: home.current.yaw, pitch: home.current.pitch, dist: home.current.dist });
+        }
+        const step = Math.min(dt, 0.05);
+        const has = (...ks: string[]) => ks.some((k) => held.has(k));
+        // Arrows / A-D turn, W-S / +- walk closer or back, Q-E slide sideways along the wall.
+        if (has("arrowleft", "a")) f.yaw += step * 1.1;
+        if (has("arrowright", "d")) f.yaw -= step * 1.1;
+        if (has("arrowup", "w", "+", "=")) f.dist *= Math.exp(-step * 1.4);
+        if (has("arrowdown", "s", "-")) f.dist *= Math.exp(step * 1.4);
+        if (has("q", "e")) {
+          tmpTmp.crossVectors(UP_AXIS, offsetOf(f, tmpN)).normalize();
+          f.target.addScaledVector(tmpTmp, (has("e") ? 1 : -1) * step * 0.9);
+        }
+        clampFree(f, home.current.maxDist);
+        invalidate();
+      }
+      if (f.on) {
+        tmpTgt.copy(f.target);
+        offsetOf(f, tmpOff);
+      }
+    }
+    tmpPos.copy(tmpTgt).add(tmpOff);
+    if (phase === "overview" && !f.on) {
       tmpPos.x += pointer.x * 0.14;
       tmpPos.y += pointer.y * 0.06;
     }
+    // Never let the camera slip through a wall or the floor.
+    tmpPos.clamp(ROOM_MIN, ROOM_MAX);
     // dt is capped so the first frame after an idle stretch doesn't snap the camera.
-    const k = first.current || reduced ? 1 : 1 - Math.exp(-Math.min(dt, 0.05) * 2.6);
+    const rate = phase === "overview" && f.on ? 7 : 2.6;
+    const k = first.current || reduced ? 1 : 1 - Math.exp(-Math.min(dt, 0.05) * rate);
     first.current = false;
     cam.position.lerp(tmpPos, k);
     look.current.lerp(tmpTgt, k);
@@ -221,9 +437,14 @@ function Hit({ api, spot, p, s }: { api: SpotApi; spot: SpotId; p: V3; s: V3 }) 
       }}
       onPointerOut={() => api.setHover((h) => (h === spot ? null : h))}
       onClick={(ev: ThreeEvent<MouseEvent>) => {
-        if (!api.interactive) return;
+        if (!api.interactive || dragState.moved) return;
         ev.stopPropagation();
-        api.onSelect(spot);
+        // Wait a beat: a second click turns this into a double-click close-up instead.
+        if (dragState.pending) clearTimeout(dragState.pending);
+        dragState.pending = setTimeout(() => {
+          dragState.pending = 0;
+          api.onSelect(spot);
+        }, 260);
       }}
     >
       <boxGeometry args={s} />
@@ -253,6 +474,8 @@ function DotTracker({ refs }: { refs: DotRefs }) {
       const el = refs.current[spot];
       if (!el) continue;
       tmpDot.set(...p).project(camera);
+      // Hide markers behind the camera or off-screen while looking around up close.
+      el.style.visibility = tmpDot.z > 1 || Math.abs(tmpDot.x) > 1.1 || Math.abs(tmpDot.y) > 1.1 ? "hidden" : "";
       const x = (tmpDot.x * 0.5 + 0.5) * size.width;
       const y = (-tmpDot.y * 0.5 + 0.5) * size.height;
       el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
