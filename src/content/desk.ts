@@ -5,7 +5,7 @@ type L = Record<Lang, string>;
 /** Spotify profile or playlist link. Leave empty to hide the button. */
 export const spotifyUrl = "";
 
-export type SpotId = "pc" | "music" | "collection" | "games" | "football" | "gym";
+export type SpotId = "pc" | "music" | "collection" | "games" | "football" | "gym" | "tv";
 
 export type Spot = {
   id: SpotId;
@@ -69,6 +69,20 @@ export const spots: Record<Exclude<SpotId, "pc">, Spot> = {
       en: "They hang on the wall on days I can't get to the pitch. The five-a-side squad is always one player short.",
     },
   },
+  tv: {
+    id: "tv",
+    label: { tr: "kavunOS", en: "kavunOS" },
+    title: { tr: "Duvardaki televizyon", en: "The TV on the wall" },
+    body: {
+      tr: "Ekranda dönen kavunOS: 2 GB RAM'li bir Android TV çubuğu için baştan yazdığım başlatıcı. Ana ekrana dönüş 669 ms'den ~320 ms'ye indi, bellek yarıya düştü.",
+      en: "That's kavunOS on the screen: the launcher I rebuilt for a 2 GB RAM Android TV stick. Return to home dropped from 669 ms to about 320 ms, and memory use roughly halved.",
+    },
+    items: [
+      { name: "Ana ekran", note: { tr: "Tam ekran duvar kâğıdı, alçak uygulama sırası", en: "Full-screen wallpaper, low app row" } },
+      { name: "Önizleme kartları", note: { tr: "Şu an çalan şarkı ve içerik", en: "Now-playing and content cards" } },
+      { name: "Kontrol merkezi", note: { tr: "Hızlı ayarlar ve QR ile duvar kâğıdı", en: "Quick settings and QR wallpaper upload" } },
+    ],
+  },
   gym: {
     id: "gym",
     label: { tr: "Spor", en: "Gym" },
@@ -92,6 +106,10 @@ export const deskText = {
     pc: "Bilgisayar",
     open: "Aç",
     openProject: "Proje sayfası",
+    screenshots: "Ekran görüntüleri",
+    openLive: "Gerçek demoyu aç",
+    prev: "Önceki",
+    next: "Sonraki",
     spotify: "Spotify'da dinle",
     desktopTitle: "Batuhan'ın masaüstü",
     about: "Hakkımda.txt",
@@ -112,6 +130,10 @@ export const deskText = {
     pc: "Computer",
     open: "Open",
     openProject: "Project page",
+    screenshots: "Screenshots",
+    openLive: "Open the real demo",
+    prev: "Previous",
+    next: "Next",
     spotify: "Listen on Spotify",
     desktopTitle: "Batuhan's desktop",
     about: "About.txt",

@@ -30,11 +30,15 @@ import {
   Hero,
   KalanchoePot,
   KnitMask,
+  MediaConsole,
   Poinsettia,
   Poster,
+  Soundbar,
   SucculentBox,
   Trooper,
   VinylBox,
+  WallTV,
+  Sneaker,
 } from "./Props";
 
 const SPIDEY = { suit: "#c4161f", trim: "#1f3f9a", web: "#3a0507" };
@@ -60,6 +64,7 @@ const VIEWS: Record<Phase, { pos: V3; target: V3 }> = {
   games: { pos: [0.9, 1.7, 1.15], target: [1.08, 1.72, 0] },
   football: { pos: [0.5, 1.88, 1.15], target: [1.45, 1.9, 0.55] },
   gym: { pos: [0.85, 1.12, 0.95], target: [1.12, 0.86, 0.2] },
+  tv: { pos: [-2.1, 1.18, 1.3], target: [-2.1, 1.15, 0] },
 };
 
 const tmpPos = new THREE.Vector3();
@@ -75,7 +80,7 @@ const PITCH = [-0.55, 0.95] as const;
 const MIN_DIST = 0.32;
 const ROOM_MIN = new THREE.Vector3(-4.3, 0.22, 0.2);
 const ROOM_MAX = new THREE.Vector3(1.36, 2.55, 6);
-const TARGET_MIN = new THREE.Vector3(-1.7, 0.3, 0);
+const TARGET_MIN = new THREE.Vector3(-2.75, 0.3, 0);
 const TARGET_MAX = new THREE.Vector3(1.45, 2.45, 1.4);
 const ray = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
@@ -268,11 +273,12 @@ function Rig({ phase }: { phase: Phase }) {
     tmpTgt.set(...v.target);
     tmpOff.set(...v.pos).sub(tmpTgt);
     // Narrow screens drop the far-left frames to keep the right-hand corner in view.
-    if (portrait && (phase === "intro" || phase === "overview")) tmpTgt.x += 0.25;
+    // Narrow screens drop the far-left wall; wide ones slide left so the TV joins the corner.
+    if (phase === "intro" || phase === "overview") tmpTgt.x += portrait ? 0.25 : -0.55;
     if (phase === "intro" || phase === "overview") {
       // Pull back until the whole corner fits the viewport.
       const tan = 2 * Math.tan(THREE.MathUtils.degToRad(fov) / 2);
-      const fit = portrait ? 3.0 / (tan * aspect) : Math.max(3.5 / (tan * aspect), 2.55 / tan);
+      const fit = portrait ? 3.0 / (tan * aspect) : Math.max(4.3 / (tan * aspect), 2.55 / tan);
       tmpOff.setLength(Math.max(tmpOff.length(), fit) * (phase === "intro" ? (portrait ? 1.2 : 1.7) : 1));
     } else if (portrait) {
       tmpOff.multiplyScalar(1.7);
@@ -405,12 +411,12 @@ function Chair({ p, ry }: { p: V3; ry: number }) {
 }
 
 /** Sneaker box with a lid lip and a white end label, stacked under the desk. */
-function ShoeBox({ p, ry = 0, c = "#e0662a", lid = "#ec7a3c" }: { p: V3; ry?: number; c?: string; lid?: string }) {
+/** Matching fabric storage bin with a handle slot, for the under-desk shelves. */
+function StorageBin({ p }: { p: V3 }) {
   return (
-    <group position={p} rotation={[0, ry, 0]}>
-      <B p={[0, 0.055, 0]} s={[0.34, 0.11, 0.22]} c={c} rough={0.8} />
-      <B p={[0, 0.112, 0]} s={[0.346, 0.03, 0.226]} c={lid} rough={0.8} />
-      <B p={[0.1, 0.05, 0.111]} s={[0.1, 0.05, 0.002]} c="#f2f0ea" rough={0.9} />
+    <group position={p}>
+      <B p={[0, 0.115, 0]} s={[0.3, 0.23, 0.3]} c="#3a3d44" rough={0.9} />
+      <B p={[0, 0.185, 0.151]} s={[0.09, 0.025, 0.002]} c="#1c1d21" rough={0.9} />
     </group>
   );
 }
@@ -460,6 +466,7 @@ const DOTS: [SpotId, V3][] = [
   ["games", [1.08, 1.7, 0.14]],
   ["football", [1.4, 2.12, 0.5]],
   ["gym", [1.25, 1.02, 0.16]],
+  ["tv", [-2.1, 1.47, 0.1]],
 ];
 
 type DotRefs = React.RefObject<Partial<Record<SpotId, HTMLButtonElement | null>>>;
@@ -597,15 +604,15 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
       <Tube a={[0.43, 2.0, 0.008]} b={[0.43, 1.2, 0.008]} rad={0.006} c="#efece6" />
       <B p={[0.43, 2.02, 0.012]} s={[0.07, 0.07, 0.015]} c="#efe9d8" />
 
+      {/* Wall TV showing kavunOS, on a low media console */}
+      <WallTV p={[-2.1, 1.15, 0]} w={1.0} />
+      <MediaConsole p={[-2.1, 0, 0.22]} w={1.3} />
+      <Tube a={[-1.95, 0.87, 0.01]} b={[-1.95, 0.26, 0.01]} rad={0.005} c="#111113" />
+
       {/* Top shelf: sneakers and hanging plant */}
       <Shelf p={[-0.67, 2.29]} w={0.6} />
-      {[-0.82, -0.64].map((x, i) => (
-        <group key={x} position={[x, 2.33, 0.07]} rotation={[0, i ? 0.25 : -0.1, 0]}>
-          <B p={[0, 0, 0]} s={[0.17, 0.05, 0.07]} c="#d9b21c" rough={0.6} />
-          <B p={[-0.045, 0.03, 0]} s={[0.07, 0.04, 0.065]} c="#c9a416" rough={0.6} />
-          <B p={[0, -0.03, 0]} s={[0.175, 0.012, 0.072]} c="#1a1a1a" />
-        </group>
-      ))}
+      <Sneaker p={[-0.82, 2.33, 0.07]} ry={-0.1} />
+      <Sneaker p={[-0.64, 2.33, 0.07]} ry={0.25} />
       <HangingPlant p={[-0.42, 2.33, 0.07]} />
 
       {/* Spider-Man shelf */}
@@ -637,10 +644,9 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
       {[-0.97, -0.6].flatMap((x) => [0.06, 0.6].map((z) => <B key={`${x}${z}`} p={[x, 0.366, z]} s={[0.025, 0.733, 0.025]} c="#151515" rough={0.4} />))}
       <B p={[-0.785, 0.12, 0.33]} s={[0.37, 0.02, 0.56]} map={wood} c="#ffffff" />
       <B p={[-0.785, 0.42, 0.33]} s={[0.37, 0.02, 0.56]} map={wood} c="#ffffff" />
-      <B p={[-0.8, 0.5, 0.33]} s={[0.27, 0.13, 0.3]} c="#b3262a" />
-      <B p={[-0.82, 0.2, 0.33]} s={[0.2, 0.14, 0.28]} c="#3f8f4a" />
-      <ShoeBox p={[-0.38, 0, 0.36]} ry={0.06} />
-      <ShoeBox p={[-0.39, 0.125, 0.35]} ry={-0.05} c="#22252b" lid="#2f333b" />
+      {[0.13, 0.43].map((y) => (
+        <StorageBin key={y} p={[-0.785, y, 0.36]} />
+      ))}
       <B p={[0.79, 0.366, 0.33]} s={[0.02, 0.733, 0.6]} c="#f3f2ef" />
 
       {/* PC tower */}
@@ -679,7 +685,7 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
       </group>
 
       {/* Monitors */}
-      <B p={[0.2, 0.8, 0.14]} s={[0.66, 0.06, 0.12]} c="#101012" rough={0.5} />
+      <Soundbar p={[0.2, 0.8, 0.14]} />
       <B p={[0.2, 0.86, 0.1]} s={[0.07, 0.07, 0.04]} c="#0c0c0e" />
       <B p={[0.2, 1.065, 0.12]} s={[0.64, 0.38, 0.025]} c="#0c0c0e" rough={0.35} gloss={0.6} />
       <mesh position={[0.2, 1.07, 0.1335]}>
@@ -706,14 +712,10 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
       </group>
       <B p={[0.5, 0.77, 0.43]} s={[0.42, 0.004, 0.28]} c="#121214" rough={1} />
       <Ball p={[0.38, 0.787, 0.44]} rad={0.03} c="#0d0d0f" s={[1, 0.55, 1.6]} />
-      <Cyl p={[-0.3, 0.82, 0.3]} rad={0.05} h={0.1} c="#f4f3ee" />
-      <B p={[-0.6, 0.778, 0.52]} s={[0.09, 0.02, 0.13]} c="#3b2a22" r={[0, 0.3, 0]} />
-      <Cyl p={[-0.72, 0.805, 0.4]} rad={0.025} h={0.07} c="#2356c7" rough={0.3} />
-      <Cyl p={[0.72, 0.785, 0.22]} rad={0.032} h={0.035} c="#f1f1f1" />
-      <SucculentBox p={[0.7, 0.768, 0.47]} />
 
-      {/* Cabinet top: plant, router, whey */}
+      {/* Cabinet top: plants, router, whey */}
       <KalanchoePot p={[0.94, 0.74, 0.43]} />
+      <SucculentBox p={[1.12, 0.74, 0.44]} />
       <B p={[1.03, 0.82, 0.24]} s={[0.05, 0.16, 0.18]} c="#18181a" r={[0, -0.5, 0]} rough={0.4} />
       <Cyl p={[1.25, 0.84, 0.14]} rad={0.085} h={0.2} map={labelTexture("WHEY", "#f4f4f2", "#1b2550", "PROTEIN")} rough={0.4} r={[0, 2.95, 0]} />
       <Cyl p={[1.25, 0.95, 0.14]} rad={0.088} h={0.03} c="#ecebe8" />
@@ -800,6 +802,7 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
       <Hit api={api} spot="games" p={[1.1, 1.74, 0.06]} s={[0.64, 0.64, 0.14]} />
       <Hit api={api} spot="games" p={[0.5, 0.3, 0.4]} s={[0.26, 0.5, 0.42]} />
       <Hit api={api} spot="football" p={[1.42, 1.93, 0.5]} s={[0.12, 0.4, 0.36]} />
+      <Hit api={api} spot="tv" p={[-2.1, 1.15, 0.08]} s={[1.04, 0.6, 0.06]} />
       <Hit api={api} spot="gym" p={[1.25, 0.86, 0.14]} s={[0.19, 0.26, 0.19]} />
 
 

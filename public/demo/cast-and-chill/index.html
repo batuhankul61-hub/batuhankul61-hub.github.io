@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Cast &amp; Chill Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bar-bg:#14171F; --line:#33384A; --gold:#E8B23D; --coral:#E8674F;
+    --text:#E9E6DC; --muted:#8B8F9E; --panel:#1B1F2A; --panel2:#20242F;
+    --hp:#D65454; --myth:#C79BF0; --boss:#FF6B5C; --aqua:#4FA6C7;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Space Grotesk',sans-serif;background:transparent;}
+  .tbh-wrap{width:100%;max-width:640px;margin:0 auto;font-size:13px;}
+
+  .tbh-strip{display:flex;align-items:center;height:54px;background:var(--bar-bg);border-radius:10px;border:1px solid var(--line);overflow:hidden;position:relative;cursor:pointer;user-select:none;}
+  .tbh-strip:hover{border-color:#454C63;}
+  .tbh-strip.bossmode{border-color:var(--boss);}
+
+  .tbh-scene{position:relative;width:120px;min-width:120px;height:100%;overflow:hidden;}
+  .tbh-sky{position:absolute;inset:0;}
+  .tbh-water{position:absolute;left:0;right:0;bottom:0;top:44%;}
+  .tbh-coral{position:absolute;bottom:0;width:6px;border-radius:3px 3px 0 0;}
+  .tbh-weed{position:absolute;bottom:0;width:2px;background:#2E7D5A;transform-origin:bottom center;animation:sway 2.4s ease-in-out infinite;}
+  @keyframes sway{0%,100%{transform:rotate(-6deg);}50%{transform:rotate(6deg);}}
+  .tbh-bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,0.35);animation:rise 3.2s linear infinite;}
+  @keyframes rise{0%{transform:translateY(0);opacity:0.6;}100%{transform:translateY(-40px);opacity:0;}}
+
+  .tbh-dock{position:absolute;left:0;bottom:44%;width:34px;height:5px;}
+  .tbh-fisherman{position:absolute;left:12px;bottom:48%;width:14px;height:24px;}
+  .tbh-fbody{position:absolute;left:3px;bottom:6px;width:8px;height:12px;border-radius:2px 2px 0 0;}
+  .tbh-fhead{position:absolute;left:4px;bottom:16px;width:6px;height:6px;background:#E8B98A;border-radius:50%;}
+  .tbh-fhat{position:absolute;left:3px;bottom:20px;width:8px;height:4px;border-radius:2px 2px 0 0;}
+  .tbh-rod{position:absolute;left:13px;bottom:20px;height:2px;background:#7A5A38;transform-origin:left center;transform:rotate(-18deg);}
+  .tbh-fline{position:absolute;left:34px;top:0;width:1px;background:rgba(233,230,220,0.5);}
+  .tbh-bobber{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--coral);animation:idlebob 1.6s ease-in-out infinite;}
+  @keyframes idlebob{0%,100%{transform:translateY(0);}50%{transform:translateY(2px);}}
+  .tbh-swim{position:absolute;width:8px;height:4px;background:#4FA6C7;border-radius:0 50% 50% 0;opacity:0.75;}
+  .tbh-boss-shape{position:absolute;bottom:6%;width:38px;height:16px;background:#3A2530;border-radius:0 60% 40% 20%;opacity:0.9;}
+  .tbh-ripplemini{position:absolute;border:1px solid rgba(233,230,220,0.5);border-radius:50%;opacity:0;pointer-events:none;}
+  .tbh-ripplemini.play{animation:rippleMini 0.9s ease-out;}
+  @keyframes rippleMini{0%{width:4px;height:4px;opacity:0.8;margin:-2px 0 0 -2px;}100%{width:34px;height:34px;opacity:0;margin:-17px 0 0 -17px;}}
+
+  @keyframes tbh-bounce { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(-3px); } }
+
+  .tbh-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:0 12px;min-width:0;}
+  .tbh-toprow{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .tbh-zone{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tbh-gold{font-family:'Fraunces',serif;font-weight:600;font-size:14px;color:var(--gold);white-space:nowrap;}
+  .tbh-botrow{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:var(--muted);}
+  .tbh-hp{color:var(--hp);}
+
+  .tbh-side{width:36px;min-width:36px;height:100%;display:flex;align-items:center;justify-content:center;border-left:1px solid var(--line);color:var(--muted);font-size:16px;transition:transform 0.15s;}
+  .tbh-strip:hover .tbh-side{color:var(--text);}
+  .tbh-side.open{transform:rotate(180deg);}
+
+  .tbh-toast{position:absolute;left:122px;top:6px;font-size:11px;font-weight:500;color:var(--gold);opacity:0;pointer-events:none;background:#1B1F2A;padding:2px 7px;border-radius:6px;border:1px solid var(--line);white-space:nowrap;z-index:5;}
+  .tbh-toast.play{animation:toastPop 1.6s ease-out;}
+  @keyframes toastPop{0%{opacity:0;transform:translateY(4px);}12%{opacity:1;transform:translateY(0);}75%{opacity:1;}100%{opacity:0;transform:translateY(-6px);}}
+
+  .tbh-panel{max-height:0;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-top:none;border-radius:0 0 10px 10px;margin-top:-1px;transition:max-height 0.28s ease;}
+  .tbh-panel.open{max-height:640px;overflow-y:auto;}
+  .tbh-panel-inner{padding:12px;}
+
+  .tbh-tabs{display:flex;gap:6px;margin-bottom:10px;}
+  .tbh-tab{flex:1;text-align:center;padding:6px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);font-size:11px;font-weight:500;cursor:pointer;}
+  .tbh-tab.active{color:var(--text);border-color:var(--gold);}
+
+  .tbh-row2{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:10px;}
+  .tbh-rowval{color:var(--text);font-weight:500;}
+
+  .tbh-upg{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin-bottom:6px;}
+  .tbh-upg-name{font-size:12px;color:var(--text);font-weight:500;}
+  .tbh-upg-lvl{font-size:10.5px;color:var(--muted);}
+  .tbh-buy{border:none;border-radius:6px;padding:6px 10px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;background:var(--gold);color:#2E2205;cursor:pointer;white-space:nowrap;}
+  .tbh-buy:disabled{opacity:0.35;cursor:not-allowed;}
+
+  .tbh-cosgroup{margin-bottom:10px;}
+  .tbh-cosgroup-title{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
+  .tbh-cositem{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 9px;margin-bottom:5px;}
+  .tbh-cositem.locked{opacity:0.4;}
+  .tbh-cositem.equipped{border-color:var(--gold);}
+  .tbh-cosname{font-size:11.5px;color:var(--text);display:flex;align-items:center;gap:6px;}
+  .tbh-swatch{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .tbh-eqbtn{border:none;border-radius:6px;padding:5px 9px;font-size:10.5px;font-weight:700;background:#2E3345;color:var(--text);cursor:pointer;}
+  .tbh-eqbtn.equipped{background:var(--gold);color:#2E2205;}
+  .tbh-eqbtn:disabled{opacity:0.35;cursor:not-allowed;}
+
+  .tbh-log-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+  .tbh-log-item { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+  .tbh-log-item.discovered { color: var(--text); border-color: rgba(232, 178, 61, 0.2); }
+
+  .tbh-prestige{margin-top:2px;padding:8px 9px;border-radius:8px;background:rgba(255,107,92,0.12);border:1px solid rgba(255,107,92,0.35);}
+  .tbh-prestige-title{font-size:11px;font-weight:700;color:var(--boss);}
+  .tbh-prestige-desc{font-size:10.5px;color:var(--muted);margin:3px 0 0;}
+
+  .tbh-footer{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-size:10px;color:var(--muted);}
+  .tbh-reset{background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:10px;padding:0;}
+</style>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/projects/logos/cast-and-chill.svg" type="image/svg+xml">
+<script>
+/* In the desktop app the game saves through window.storage; in the browser that maps to localStorage. */
+(function(){
+  function safe(fn, fallback){ try { return fn(); } catch (e) { return fallback; } }
+  window.storage = window.storage || {
+    get: function(k){ return Promise.resolve({ value: safe(function(){ return localStorage.getItem(k); }, null) }); },
+    set: function(k, v){ return Promise.resolve(safe(function(){ localStorage.setItem(k, v); return true; }, false)); }
+  };
+})();
+</script>
+<style>
+  /* Web demo frame: the strip normally sits on the Windows taskbar. */
+  html{background:#0b0d12;}
+  body.web-demo{min-height:100vh;padding:24px 16px 48px;display:flex;flex-direction:column;align-items:center;gap:22px;color:#E9E6DC;}
+  .demo-top{width:100%;max-width:640px;display:flex;justify-content:space-between;align-items:center;font-size:13px;}
+  .demo-top a{color:#8B8F9E;text-decoration:none;}
+  .demo-top a:hover{color:#E9E6DC;}
+  .demo-intro{width:100%;max-width:640px;margin:0;}
+  .demo-intro h1{font-family:'Fraunces',serif;font-size:26px;margin:0 0 6px;color:#E9E6DC;}
+  .demo-intro p{margin:0;color:#8B8F9E;font-size:14px;line-height:1.5;}
+</style>
+</head>
+<body class="web-demo">
+<div class="demo-top"><a href="/projeler/cast-and-chill/">← Proje sayfası</a><span>Tarayıcı demosu</span></div>
+<div class="demo-intro">
+  <h1>Cast &amp; Chill</h1>
+  <p>Normalde Windows görev çubuğunda duran bir idle balıkçılık oyunu. Şeride tıkla, oltayı at; ilerlemen bu tarayıcıda kaydedilir.</p>
+</div>
+<div class="tbh-wrap">
+  <div class="tbh-strip" id="stripBar">
+    <div class="tbh-scene" id="scene">
+      <div class="tbh-sky" id="skyEl"></div>
+      <div class="tbh-water" id="waterEl">
+        <div class="tbh-coral" id="coral1" style="left:4px;height:10px;background:#D9663B;"></div>
+        <div class="tbh-coral" id="coral2" style="left:14px;height:6px;background:#C24F8A;"></div>
+        <div class="tbh-coral" id="coral3" style="left:96px;height:9px;background:#E8B23D;"></div>
+        <div class="tbh-weed" style="left:80px;height:14px;"></div>
+        <div class="tbh-weed" style="left:86px;height:9px;animation-delay:0.6s;"></div>
+        <div class="tbh-bubble" style="left:60px;bottom:4px;width:3px;height:3px;animation-delay:0.2s;"></div>
+        <div class="tbh-bubble" style="left:64px;bottom:2px;width:2px;height:2px;animation-delay:1.4s;"></div>
+        <div class="tbh-boss-shape" id="bossShape" style="left:70px;display:none;"></div>
+      </div>
+      <div class="tbh-dock" id="dockEl"></div>
+      <div class="tbh-fisherman">
+        <div class="tbh-fbody" id="fbodyEl"></div>
+        <div class="tbh-fhead"></div>
+        <div class="tbh-fhat" id="fhatEl" style="display:none;"></div>
+      </div>
+      <div class="tbh-rod" id="rod"></div>
+      <div class="tbh-fline" id="fline"></div>
+      <div class="tbh-bobber" id="bobber"></div>
+      <div class="tbh-ripplemini" id="rippleMini"></div>
+      <div class="tbh-swim" id="swimFish" style="bottom:14%;"></div>
+
+      <div id="whaleEvent" style="display: none; position: absolute; top: 25%; left: -200px; width: 130px; height: 45px; background: rgba(79, 166, 199, 0.4); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; color: #fff; font-weight: bold; font-size: 9px; align-items: center; justify-content: center; z-index: 10; pointer-events: none; transition: left 10s linear; box-shadow: 0 0 6px rgba(255,255,255,0.2);">🐋 Balina (x5)</div>
+      <button id="chestEvent" style="display: none; position: absolute; bottom: 12%; left: 50%; transform: translateX(-50%); padding: 3px 7px; font-size: 10px; font-weight: bold; font-family: inherit; background: var(--gold); border: 1px solid #2E2205; border-radius: 4px; color: #2E2205; cursor: pointer; z-index: 20; animation: tbh-bounce 0.4s infinite alternate;">🌊 Sandık! Tıkla!</button>
+    </div>
+    <div class="tbh-mid">
+      <div class="tbh-toprow">
+        <span class="tbh-zone" id="zoneLabel">Karadeniz · Sv.1</span>
+        <span class="tbh-gold" id="goldDisplay">0</span>
+      </div>
+      <div class="tbh-botrow">
+        <span><span id="seasonLabel">İlkbahar</span> · <span id="timeLabel">06:00</span> <span id="weatherLabel" style="margin-left:4px;">☀️</span></span>
+        <span class="tbh-hp" id="hpLabel">❤ 100/100</span>
+      </div>
+    </div>
+    <div class="tbh-side" id="chevron"><i>▾</i></div>
+    <div class="tbh-toast" id="toast"></div>
+  </div>
+
+  <div class="tbh-panel" id="panel">
+    <div class="tbh-panel-inner">
+      <div class="tbh-tabs">
+        <div class="tbh-tab active" id="tabUpg">Yükseltmeler</div>
+        <div class="tbh-tab" id="tabCos">Kozmetikler</div>
+        <div class="tbh-tab" id="tabLog">Günlük</div>
+        <div class="tbh-tab" id="tabDev" style="color:var(--gold);">Dev</div>
+      </div>
+
+      <div id="viewUpg">
+        <div class="tbh-row2">
+          <span>Kazanç hızı: <span class="tbh-rowval" id="rateVal">0/dk</span></span>
+          <span>Döngü: <span class="tbh-rowval" id="cycleVal">3.0sn</span></span>
+        </div>
+        <div id="upgradeList"></div>
+        <div class="tbh-prestige">
+          <div class="tbh-prestige-title" id="bossTitle">Sonraki boss: Sv. 20</div>
+          <div class="tbh-prestige-desc" id="bossDesc">Karadeniz Devi seni bekliyor.</div>
+        </div>
+      </div>
+
+      <div id="viewCos" style="display:none;">
+        <div class="tbh-cosgroup"><div class="tbh-cosgroup-title">Şapka</div><div id="hatList"></div></div>
+        <div class="tbh-cosgroup"><div class="tbh-cosgroup-title">Gömlek</div><div id="shirtList"></div></div>
+        <div class="tbh-cosgroup"><div class="tbh-cosgroup-title">Tekne</div><div id="boatList"></div></div>
+      </div>
+
+      <div id="viewLog" style="display:none;">
+        <div class="tbh-cosgroup-title" style="margin-bottom:8px;">Yalanlanan / Keşfedilen Balıklar & Hazineler</div>
+        <div class="tbh-log-grid" id="logGrid"></div>
+      </div>
+
+      <div id="viewDev" style="display:none;">
+        <div class="tbh-row2" style="margin-bottom:12px;">Test amaçlı geliştirici araçları. İlerlemeyi bozabilir.</div>
+        <button class="tbh-buy" id="devGoldBtn" style="width:100%;margin-bottom:8px;padding:9px;">Sınırsız Altın (+1T)</button>
+        <button class="tbh-buy" id="devLevelBtn" style="width:100%;margin-bottom:8px;padding:9px;">Sonraki Seviyeye Geç</button>
+        <button class="tbh-buy" id="devCosBtn" style="width:100%;margin-bottom:8px;padding:9px;">Tüm Kozmetikleri Aç</button>
+      </div>
+
+      <div class="tbh-footer">
+        <span id="saveStatus">Kaydedildi</span>
+        <button class="tbh-reset" id="resetBtn">İlerlemeyi sıfırla</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ZONES = [
+    {name:'Karadeniz', sky:['#132A3E','#2F6E7A'], water:['#0B4550','#062F38'], boss:'Karadeniz Devi'},
+    {name:'Ege Denizi', sky:['#1B3A5C','#3E7FA8'], water:['#0C4E5E','#053640'], boss:'Ege Ejderi'},
+    {name:'Akdeniz', sky:['#123C5A','#2E88B8'], water:['#0A5468','#043644'], boss:'Akdeniz Beyaz Köpekbalığı'},
+    {name:'Atlas Okyanusu', sky:['#0A2A52','#1E5FA0'], water:['#073E52','#032230'], boss:'Atlas Devasa Ahtapotu'},
+    {name:'Pasifik Okyanusu', sky:['#081E48','#163E82'], water:['#052E42','#021A26'], boss:'Pasifik Kraken\'i'},
+    {name:'Derin Okyanus', sky:['#050B2A','#0C1E52'], water:['#031A28','#010E18'], boss:'Çukur Canavarı'}
+  ];
+
+  var NORMAL_FISH = [
+    {name:'Hamsi', value:1, rarity:'common', w:40, zones:[0], season:'all'},
+    {name:'İstavrit', value:1.4, rarity:'common', w:34, zones:[0,1], season:'all'},
+    {name:'Uskumru', value:6, rarity:'common', w:20, zones:[0,1], season:'ilkbahar'},
+    {name:'Çipura', value:4, rarity:'uncommon', w:22, zones:[0,1,2], season:'all'},
+    {name:'Levrek', value:5.5, rarity:'uncommon', w:18, zones:[0,1,2], season:'all'},
+    {name:'Palamut', value:9, rarity:'uncommon', w:16, zones:[0], season:'sonbahar'},
+    {name:'Mercan Balığı', value:15, rarity:'uncommon', w:14, zones:[1,2], season:'yaz'},
+    {name:'Lüfer', value:12, rarity:'rare', w:10, zones:[0,1], season:'sonbahar'},
+    {name:'Somon', value:20, rarity:'rare', w:8, zones:[1,2,3], season:'all'},
+    {name:'Ton Balığı', value:40, rarity:'rare', w:6, zones:[2,3,4], season:'all'},
+    {name:'Yıldız Mercan Balığı', value:25, rarity:'rare', w:7, zones:[2,3], season:'all', time:'sunset'},
+    {name:'Buz Morinası', value:18, rarity:'rare', w:9, zones:[4,5], season:'kış'},
+    {name:'Kılıç Balığı', value:60, rarity:'epic', w:3, zones:[2,3,4], season:'kış'},
+    {name:'Orkinos', value:70, rarity:'epic', w:2.4, zones:[3,4,5], season:'all'},
+    {name:'Dev Yayın Balığı', value:85, rarity:'epic', w:1.8, zones:[0,1], season:'yaz'},
+    {name:'Derin Fener Balığı', value:95, rarity:'epic', w:1.5, zones:[5], season:'all', time:'night'},
+    {name:'Altın Sazan', value:260, rarity:'legendary', w:0.3, zones:[0,1,2,3,4,5], season:'all'},
+    {name:'Gümüş Yılan Balığı', value:300, rarity:'legendary', w:0.22, zones:[3,4,5], season:'all', time:'night'}
+  ];
+
+  var TREASURES = [
+    {name:'Eski Para', value:15, rarity:'common', w:50},
+    {name:'Yosunlu Sandık', value:50, rarity:'uncommon', w:30},
+    {name:'Parlak İnci', value:150, rarity:'rare', w:15},
+    {name:'Korsan Haritası', value:400, rarity:'epic', w:4},
+    {name:'Altın Taç', value:1200, rarity:'legendary', w:1}
+  ];
+
+  var AGGRESSIVE_FISH = [
+    {name:'Elektrikli Yılan Balığı', dmg:5, w:10, zones:[0]},
+    {name:'Vatoz', dmg:4, w:10, zones:[0,1]},
+    {name:'Barrakuda', dmg:6, w:10, zones:[1,2]},
+    {name:'Murene', dmg:7, w:10, zones:[2,3]},
+    {name:'Elektrikli Vatoz', dmg:8, w:9, zones:[3,4]},
+    {name:'Denizanası Sürüsü', dmg:6, w:14, zones:[0,1,2,3,4,5]},
+    {name:'Dev Ahtapot Kolu', dmg:10, w:8, zones:[3,4,5]},
+    {name:'Ejderha Balığı', dmg:12, w:7, zones:[4,5]}
+  ];
+
+  var MYTH_FISH = [
+    {name:'Poseidon\'un Atı', value:450, w:0.18},
+    {name:'Kraken Yavrusu', value:520, w:0.15},
+    {name:'Leviathan Pulu', value:650, w:0.1}
+  ];
+
+  var JUNK = [
+    {name:'Eski Bot', w:10},
+    {name:'Plastik Şişe', w:14},
+    {name:'Paslı Teneke Kutu', w:12},
+    {name:'Yosun Yumağı', w:10},
+    {name:'Kırık Ayna', w:6}
+  ];
+
+  var HATS = [
+    {id:'hat_none', name:'Şapka Yok', color:null},
+    {id:'hat_bandana', name:'Bandana', color:'#C23B3B'},
+    {id:'hat_straw', name:'Hasır Şapka', color:'#D9B36C'},
+    {id:'hat_shark', name:'Köpekbalığı Yüzgeci', color:'#4A4E58'},
+    {id:'hat_kraken', name:'Kraken Tacı', color:'#5A2E7A'}
+  ];
+  var SHIRTS = [
+    {id:'shirt_default', name:'Gemici Gömleği', color:'#3E6FA0'},
+    {id:'shirt_rain', name:'Yağmurluk', color:'#E8B23D'},
+    {id:'shirt_striped', name:'Çizgili Tişört', color:'#C4453B'},
+    {id:'shirt_armor', name:'Zırhlı Yelek', color:'#7A7F8C'},
+    {id:'shirt_gold', name:'Altın İşlemeli Ceket', color:'#D4AF37'}
+  ];
+  var BOATS = [
+    {id:'boat_dock', name:'Basit İskele', color:'#5A4630'},
+    {id:'boat_broken', name:'Kırık Tekne', color:'#6B4A32'},
+    {id:'boat_titanic', name:'Titanik Tahta Parçası', color:'#B9C4C9'},
+    {id:'boat_yacht', name:'Yat', color:'#EDEEF0'},
+    {id:'boat_gold', name:'Altın Kano', color:'#E8B23D'}
+  ];
+  var BOSS_DROPS = [
+    ['hat_bandana','shirt_rain','boat_broken'],
+    ['hat_straw','shirt_striped','boat_titanic'],
+    ['hat_shark','shirt_armor','boat_yacht'],
+    ['hat_kraken','shirt_gold','boat_gold']
+  ];
+
+  var UPGRADE_DEFS = {
+    power: {name:'Olta Gücü', base:12, growth:1.16, effect:function(l){return 1+l*0.18;}},
+    reel: {name:'Makara Hızı', base:15, growth:1.19, effect:function(l){return Math.max(0.6,1-l*0.045);}},
+    luck: {name:'Şans', base:20, growth:1.22, effect:function(l){return l*0.9;}},
+    bait: {name:'Yem Kalitesi', base:10, growth:1.14, effect:function(l){return l*0.5;}},
+    armor: {name:'Zırh', base:18, growth:1.2, effect:function(l){return l;}}
+  };
+
+  var state = {
+    gold:0, xp:0, level:1, zoneIndex:0,
+    hp:100, maxHp:100,
+    hour:6, weather:'sunny', whaleBonusTimer:0,
+    bossActive:false, bossHp:0, bossMaxHp:0, bossTier:0,
+    cycleMs:3000, progress:0, paused:false,
+    upgrades:{power:0, reel:0, luck:0, bait:0, armor:0},
+    equipped:{hat:'hat_none', shirt:'shirt_default', boat:'boat_dock'},
+    owned:{hat:['hat_none'], shirt:['shirt_default'], boat:['boat_dock']},
+    discoveredFish:[],
+    panelOpen:false, activeTab:'upg'
+  };
+
+  function fmt(n){if(n>=1000000)return (n/1000000).toFixed(2)+'M';if(n>=1000)return (n/1000).toFixed(1)+'K';return Math.round(n*100)/100;}
+  function upgradeCost(k){var d=UPGRADE_DEFS[k];return Math.ceil(d.base*Math.pow(d.growth,state.upgrades[k]));}
+  function xpToNext(){return Math.ceil(20*Math.pow(state.level,1.35));}
+  function currentSeason(){
+    var m=new Date().getMonth();
+    if(m===11||m===0||m===1) return 'kış';
+    if(m>=2&&m<=4) return 'ilkbahar';
+    if(m>=5&&m<=7) return 'yaz';
+    return 'sonbahar';
+  }
+
+  function currentPeriod() {
+    if (state.hour >= 6 && state.hour < 18) return 'day';
+    if (state.hour >= 18 && state.hour < 22) return 'sunset';
+    return 'night';
+  }
+
+  function currentCycleMs(){
+    var reelEff=UPGRADE_DEFS.reel.effect(state.upgrades.reel);
+    var diffMult=1+state.level*0.006;
+    return Math.max(650, state.cycleMs*diffMult*reelEff);
+  }
+  function aggressiveChance(){
+    var base=0.04+state.level*0.0022;
+    if(state.weather === 'stormy') base += 0.08; // Fırtınada tehlike artar
+    var armorRed=state.upgrades.armor*0.004;
+    return Math.max(0.015, Math.min(0.32, base-armorRed));
+  }
+  function mythChance(){
+    var base = 0.001 + UPGRADE_DEFS.luck.effect(state.upgrades.luck)*0.00003;
+    if(state.weather === 'rainy') base *= 1.5; // Yağmurda şans artar
+    return base;
+  }
+  function junkChance(){
+    return state.weather === 'stormy' ? 0.14 : 0.09;
+  }
+  function rodBreakChance(){
+    return Math.min(0.03, 0.012 + state.level*0.00004);
+  }
+
+  function zoneFishPool(){
+    var season=currentSeason();
+    var period=currentPeriod();
+    return NORMAL_FISH.filter(function(f){
+      var zoneMatch = f.zones.indexOf(state.zoneIndex)!==-1;
+      var seasonMatch = (f.season==='all'||f.season===season);
+      var timeMatch = (!f.time || f.time === period);
+      return zoneMatch && seasonMatch && timeMatch;
+    });
+  }
+
+  function zoneAggroPool(){
+    return AGGRESSIVE_FISH.filter(function(f){return f.zones.indexOf(state.zoneIndex)!==-1;});
+  }
+  function weightedPick(arr, weightKey){
+    var total=arr.reduce(function(a,f){return a+f[weightKey];},0);
+    var r=Math.random()*total;
+    for(var i=0;i<arr.length;i++){r-=arr[i][weightKey];if(r<=0)return arr[i];}
+    return arr[arr.length-1];
+  }
+  function pickNormalFish(){
+    var pool=zoneFishPool();
+    if(pool.length === 0) return NORMAL_FISH[0];
+    var luckBonus=UPGRADE_DEFS.luck.effect(state.upgrades.luck);
+    if(state.weather === 'rainy') luckBonus += 1.5;
+    var weights=pool.map(function(f){
+      var w=f.w;
+      if(f.rarity==='rare') w+=luckBonus*0.5;
+      if(f.rarity==='epic') w+=luckBonus*0.22;
+      if(f.rarity==='legendary') w+=luckBonus*0.05;
+      return w;
+    });
+    var total=weights.reduce(function(a,b){return a+b;},0);
+    var r=Math.random()*total;
+    for(var i=0;i<pool.length;i++){r-=weights[i];if(r<=0)return pool[i];}
+    return pool[0];
+  }
+
+  var rippleEl,toastEl,rodEl,bobberEl,flineEl;
+
+  function showToast(text,color){
+    toastEl.style.color=color;
+    toastEl.textContent=text;
+    toastEl.classList.remove('play'); void toastEl.offsetWidth; toastEl.classList.add('play');
+  }
+  function playCatchAnim(){
+    rippleEl.classList.remove('play'); void rippleEl.offsetWidth; rippleEl.classList.add('play');
+    rodEl.style.transform='rotate(6deg)';
+    setTimeout(function(){rodEl.style.transform='rotate(-18deg)';},220);
+  }
+
+  function discover(name) {
+    if(state.discoveredFish.indexOf(name) === -1) {
+      state.discoveredFish.push(name);
+      renderLogGrid();
+    }
+  }
+
+  function gainXp(amount){
+    state.xp+=amount;
+    while(state.xp>=xpToNext()){
+      state.xp-=xpToNext();
+      state.level+=1;
+      if(state.level%20===0 && !state.bossActive){
+        spawnBoss();
+      }
+    }
+  }
+
+  function checkRandomEvents() {
+    if (state.whaleBonusTimer > 0 || document.getElementById('chestEvent').style.display === 'block') return;
+    var rand = Math.random();
+    if (rand < 0.05) {
+      triggerWhaleEvent();
+    } else if (rand >= 0.05 && rand < 0.10) {
+      triggerChestEvent();
+    }
+  }
+
+  function triggerWhaleEvent() {
+    var whaleEl = document.getElementById('whaleEvent');
+    if (!whaleEl) return;
+    whaleEl.style.display = 'flex';
+    whaleEl.style.left = '-150px';
+    setTimeout(function() { whaleEl.style.left = '110%'; }, 50);
+
+    state.whaleBonusTimer = 10;
+    showToast('🐋 Balina Geçiyor! 10sn x5 Altın!', '#4FA6C7');
+
+    var interval = setInterval(function() {
+      state.whaleBonusTimer--;
+      if (state.whaleBonusTimer <= 0) {
+        clearInterval(interval);
+        whaleEl.style.display = 'none';
+      }
+    }, 1000);
+  }
+
+  function triggerChestEvent() {
+    var chestEl = document.getElementById('chestEvent');
+    if (!chestEl) return;
+    chestEl.style.display = 'block';
+
+    var chestTimeout = setTimeout(function() {
+      if (chestEl.style.display === 'block') {
+        chestEl.style.display = 'none';
+        showToast('Sandık dalgalara kapıldı...', '#8B8F9E');
+      }
+    }, 7000);
+
+    chestEl.onclick = function(e) {
+      e.stopPropagation();
+      clearTimeout(chestTimeout);
+      chestEl.style.display = 'none';
+      var reward = Math.floor((Math.random() * 80 + 40) * state.level);
+      state.gold += reward;
+      renderStats();
+      showToast('🌊 Sandık Açıldı! +' + fmt(reward) + ' Altın', '#E8B23D');
+    };
+  }
+
+  function spawnBoss(){
+    state.bossActive=true;
+    var tier=Math.min(3, Math.floor(state.level/20)-1);
+    state.bossTier=Math.floor(state.level/20)-1;
+    state.bossMaxHp=Math.round(80*Math.pow(1.5,state.bossTier));
+    state.bossHp=state.bossMaxHp;
+    showToast(ZONES[Math.min(state.zoneIndex,ZONES.length-1)].boss+' belirdi!', '#FF6B5C');
+  }
+
+  function defeatBoss(){
+    state.bossActive=false;
+    var tier=Math.min(3, state.bossTier);
+    var dropPool=BOSS_DROPS[tier] || BOSS_DROPS[BOSS_DROPS.length-1];
+    var unowned=dropPool.filter(function(id){
+      return state.owned.hat.indexOf(id)===-1 && state.owned.shirt.indexOf(id)===-1 && state.owned.boat.indexOf(id)===-1;
+    });
+    var bonusGold=100*Math.pow(1.6,state.bossTier);
+    if(unowned.length>0){
+      var dropId=unowned[Math.floor(Math.random()*unowned.length)];
+      if(HATS.some(function(h){return h.id===dropId;})) state.owned.hat.push(dropId);
+      else if(SHIRTS.some(function(s){return s.id===dropId;})) state.owned.shirt.push(dropId);
+      else state.owned.boat.push(dropId);
+      var dropObj = HATS.concat(SHIRTS,BOATS).find(function(c){return c.id===dropId;});
+      showToast('Boss düştü! Kozmetik: '+dropObj.name, '#C79BF0');
+    }else{
+      state.gold+=bonusGold;
+      showToast('Boss düştü! +'+fmt(bonusGold)+' altın', '#E8B23D');
+    }
+    if(state.zoneIndex<ZONES.length-1) state.zoneIndex+=1;
+    applyZoneVisuals();
+    renderCosmeticLists();
+  }
+
+  function takeDamage(dmg){
+    var reduced=Math.max(1, dmg - state.upgrades.armor*0.6);
+    state.hp=Math.max(0, state.hp-reduced);
+    if(state.hp<=0){
+      state.paused=true;
+      showToast('Bayıldın! Toparlanıyorsun...', '#D65454');
+      setTimeout(function(){
+        state.hp=Math.round(state.maxHp*0.5);
+        state.paused=false;
+        renderStats();
+      }, 2600);
+    }
+  }
+
+  function updateRodBrokenVisual(broken){
+    if(broken){
+      rodEl.style.opacity='0.25';
+    }else{
+      rodEl.style.opacity='1';
+      updateRodTier();
+    }
+  }
+
+  function breakRod(){
+    state.paused=true;
+    updateRodBrokenVisual(true);
+    showToast('Oltan kırıldı! Tamir ediliyor...', '#8B8F9E');
+    scheduleSave();
+    setTimeout(function(){
+      state.paused=false;
+      updateRodBrokenVisual(false);
+      showToast('Olta tamir edildi', '#8B8F9E');
+      renderStats();
+      scheduleSave();
+    }, 3200);
+  }
+
+  function processCycle(){
+    if(state.paused) return;
+
+    state.hour = (state.hour + 1) % 24;
+    
+    // Her 6 saatte bir %35 ihtimalle hava durumu değişir
+    if(state.hour % 6 === 0 && Math.random() < 0.35) {
+      var weathers = ['sunny', 'rainy', 'stormy'];
+      state.weather = weathers[Math.floor(Math.random() * weathers.length)];
+    }
+
+    applyZoneVisuals();
+    checkRandomEvents();
+
+    if(Math.random()<rodBreakChance()){
+      breakRod();
+      return;
+    }
+    var aggroChance=aggressiveChance();
+    if(Math.random()<aggroChance){
+      var aggroPool=zoneAggroPool();
+      var aggro=weightedPick(aggroPool,'w');
+      takeDamage(aggro.dmg);
+      showToast(aggro.name+' saldırdı! -'+Math.round(aggro.dmg)+' can', '#D65454');
+      playCatchAnim();
+    } else if(state.bossActive){
+      var counter=Math.random()<0.28;
+      if(counter){
+        takeDamage(6+state.bossTier*2);
+        showToast(ZONES[state.zoneIndex].boss+' saldırdı!', '#FF6B5C');
+        playCatchAnim();
+      }else{
+        var dmgToBoss=Math.round(8+UPGRADE_DEFS.power.effect(state.upgrades.power)*4);
+        state.bossHp=Math.max(0,state.bossHp-dmgToBoss);
+        showToast('Boss\'a '+dmgToBoss+' hasar!', '#FF6B5C');
+        playCatchAnim();
+        if(state.bossHp<=0){ defeatBoss(); }
+      }
+    } else if(Math.random()<mythChance()){
+      var myth=weightedPick(MYTH_FISH,'w');
+      var value=Math.round(myth.value*(1+state.zoneIndex*0.15));
+      var goldMult = (state.whaleBonusTimer > 0) ? 5 : 1;
+      value *= goldMult;
+      state.gold+=value;
+      gainXp(Math.round(value*0.4));
+      discover(myth.name);
+      showToast((goldMult > 1 ? '🐋 x5 ' : '') + 'MİTOLOJİK! '+myth.name+' +'+fmt(value), '#C79BF0');
+      playCatchAnim();
+      state.hp=Math.min(state.maxHp,state.hp+2);
+    } else if(Math.random() < 0.08) { 
+      var treasure = weightedPick(TREASURES, 'w');
+      var goldMult = (state.whaleBonusTimer > 0) ? 5 : 1;
+      var value = treasure.value * goldMult;
+      state.gold += value;
+      gainXp(Math.round(treasure.value * 0.3));
+      discover(treasure.name);
+      showToast((goldMult > 1 ? '🐋 ' : '💎 ') + treasure.name + ' çıkardın! +' + fmt(value), '#C79BF0');
+      playCatchAnim();
+    } else if(Math.random()<junkChance()){
+      var junk=weightedPick(JUNK,'w');
+      showToast(junk.name+' +0', '#8B8F9E');
+      playCatchAnim();
+    } else {
+      var fish=pickNormalFish();
+      var powerMult=UPGRADE_DEFS.power.effect(state.upgrades.power);
+      var baitFlat=UPGRADE_DEFS.bait.effect(state.upgrades.bait);
+      var value=Math.round((fish.value*powerMult+baitFlat)*100)/100;
+      var goldMult = (state.whaleBonusTimer > 0) ? 5 : 1;
+      value *= goldMult;
+      state.gold+=value;
+      gainXp(1+Math.floor(fish.value/3));
+      discover(fish.name);
+      var isRareplus=(fish.rarity==='epic'||fish.rarity==='legendary');
+      showToast((goldMult > 1 ? '🐋 ' : '') + fish.name+' +'+fmt(value), isRareplus?'#E8674F':'#E8B23D');
+      playCatchAnim();
+      state.hp=Math.min(state.maxHp,state.hp+2);
+    }
+    renderStats();
+    renderUpgrades();
+    scheduleSave();
+  }
+
+  function renderStats(){
+    document.getElementById('goldDisplay').textContent=fmt(state.gold);
+    document.getElementById('zoneLabel').textContent=ZONES[state.zoneIndex].name+' · Sv.'+state.level;
+    document.getElementById('seasonLabel').textContent=currentSeason().charAt(0).toUpperCase()+currentSeason().slice(1);
+    
+    var prettyHour = (state.hour < 10 ? '0' : '') + state.hour + ':00';
+    var periodText = currentPeriod() === 'day' ? ' (Gündüz)' : (currentPeriod() === 'sunset' ? ' (G.Batımı)' : ' (Gece)');
+    document.getElementById('timeLabel').textContent = prettyHour + periodText;
+
+    var wIco = state.weather === 'sunny' ? '☀️' : (state.weather === 'rainy' ? '🌧️' : '⛈️');
+    document.getElementById('weatherLabel').textContent = wIco;
+
+    document.getElementById('hpLabel').textContent='❤ '+Math.round(state.hp)+'/'+state.maxHp;
+    var cyc=currentCycleMs();
+    var pool=zoneFishPool();
+    var avgVal=pool.length? (pool.reduce(function(a,f){return a+f.value*f.w;},0)/pool.reduce(function(a,f){return a+f.w;},0)) : 1;
+    var powerMult=UPGRADE_DEFS.power.effect(state.upgrades.power);
+    var baitFlat=UPGRADE_DEFS.bait.effect(state.upgrades.bait);
+    var perCatch=(avgVal*powerMult+baitFlat);
+    var perMin=perCatch*(60000/cyc)*(1-aggressiveChance());
+    document.getElementById('rateVal').textContent=fmt(perMin)+'/dk';
+    document.getElementById('cycleVal').textContent=(cyc/1000).toFixed(1)+'sn';
+
+    var stripBar=document.getElementById('stripBar');
+    stripBar.classList.toggle('bossmode', state.bossActive);
+    var bossShape=document.getElementById('bossShape');
+    if(state.bossActive){
+      bossShape.style.display='block';
+      document.getElementById('bossTitle').textContent=ZONES[state.zoneIndex].boss+' — '+Math.round(state.bossHp)+'/'+state.bossMaxHp+' HP';
+      document.getElementById('bossDesc').textContent='Balık tutmaya devam et, her döngü boss\'a hasar verir.';
+    }else{
+      bossShape.style.display='none';
+      var nextBossLevel=(Math.floor(state.level/20)+1)*20;
+      document.getElementById('bossTitle').textContent='Sonraki boss: Sv. '+nextBossLevel;
+      document.getElementById('bossDesc').textContent=ZONES[Math.min(state.zoneIndex,ZONES.length-1)].boss+' seni bekliyor.';
+    }
+    updateRodTier();
+  }
+
+  function updateRodTier(){
+    var p=state.upgrades.power;
+    var w=22,h=2,color='#7A5A38';
+    if(p>=30){ w=26; h=3; color='#B7472A'; }
+    else if(p>=15){ w=25; h=2.5; color='#2E2E38'; }
+    else if(p>=5){ w=23; h=2; color='#8C6A44'; }
+    rodEl.style.width=w+'px'; rodEl.style.height=h+'px'; rodEl.style.background=color;
+    flineEl.style.height=(h===3?'16px':'20px');
+  }
+
+  function renderUpgrades(){
+    var list=document.getElementById('upgradeList');
+    list.innerHTML='';
+    Object.keys(UPGRADE_DEFS).forEach(function(key){
+      var d=UPGRADE_DEFS[key];
+      var lvl=state.upgrades[key];
+      var cost=upgradeCost(key);
+      var row=document.createElement('div');
+      row.className='tbh-upg';
+      row.innerHTML='<div><div class="tbh-upg-name">'+d.name+'</div><div class="tbh-upg-lvl">Seviye '+lvl+'</div></div>';
+      var btn=document.createElement('button');
+      btn.className='tbh-buy';
+      btn.textContent=fmt(cost)+' altın';
+      btn.disabled=state.gold<cost;
+      btn.onclick=function(e){
+        e.stopPropagation();
+        var c=upgradeCost(key);
+        if(state.gold>=c){
+          state.gold-=c; state.upgrades[key]+=1;
+          if(key==='armor') state.maxHp=100+state.upgrades.armor*20;
+          renderStats(); renderUpgrades(); scheduleSave();
+        }
+      };
+      row.appendChild(btn);
+      list.appendChild(row);
+    });
+  }
+
+  function renderCosmeticList(containerId, defs, slot){
+    var container=document.getElementById(containerId);
+    container.innerHTML='';
+    defs.forEach(function(c){
+      var owned=state.owned[slot].indexOf(c.id)!==-1;
+      var equipped=state.equipped[slot]===c.id;
+      var row=document.createElement('div');
+      row.className='tbh-cositem'+(owned?'':' locked')+(equipped?' equipped':'');
+      var swatch=c.color? '<span class="tbh-swatch" style="background:'+c.color+';"></span>' : '';
+      row.innerHTML='<span class="tbh-cosname">'+swatch+c.name+(owned?'':' (boss düşürür)')+'</span>';
+      var btn=document.createElement('button');
+      btn.className='tbh-eqbtn'+(equipped?' equipped':'');
+      btn.textContent=equipped?'Kuşanıldı':'Kuşan';
+      btn.disabled=!owned;
+      btn.onclick=function(e){
+        e.stopPropagation();
+        if(!owned) return;
+        state.equipped[slot]=c.id;
+        renderCosmeticLists();
+        applyEquippedVisuals();
+        scheduleSave();
+      };
+      row.appendChild(btn);
+      container.appendChild(row);
+    });
+  }
+  function renderCosmeticLists(){
+    renderCosmeticList('hatList', HATS, 'hat');
+    renderCosmeticList('shirtList', SHIRTS, 'shirt');
+    renderCosmeticList('boatList', BOATS, 'boat');
+  }
+
+  function renderLogGrid() {
+    var grid = document.getElementById('logGrid');
+    grid.innerHTML = '';
+    var allItems = NORMAL_FISH.concat(TREASURES, MYTH_FISH);
+    allItems.forEach(function(item) {
+      var disc = state.discoveredFish.indexOf(item.name) !== -1;
+      var div = document.createElement('div');
+      div.className = 'tbh-log-item' + (disc ? ' discovered' : '');
+      div.innerHTML = '<span>' + (disc ? item.name : '???') + '</span><span style="font-size:9px;">' + item.rarity + '</span>';
+      grid.appendChild(div);
+    });
+  }
+
+  function applyEquippedVisuals(){
+    var hat=HATS.find(function(h){return h.id===state.equipped.hat;});
+    var fhat=document.getElementById('fhatEl');
+    if(hat && hat.color){ fhat.style.display='block'; fhat.style.background=hat.color; }
+    else { fhat.style.display='none'; }
+
+    var shirt=SHIRTS.find(function(s){return s.id===state.equipped.shirt;}) || SHIRTS[0];
+    document.getElementById('fbodyEl').style.background=shirt.color;
+
+    var boat=BOATS.find(function(b){return b.id===state.equipped.boat;}) || BOATS[0];
+    document.getElementById('dockEl').style.background=boat.color;
+  }
+
+  function applyZoneVisuals(){
+    var z=ZONES[state.zoneIndex];
+    var period=currentPeriod();
+    var skyColor1=z.sky[0];
+    var skyColor2=z.sky[1];
+
+    if (state.weather === 'stormy') {
+      skyColor1 = '#1C1F26';
+      skyColor2 = '#2D3540';
+    } else if (state.weather === 'rainy') {
+      skyColor1 = '#2A323D';
+      skyColor2 = '#445061';
+    } else {
+      if (period === 'sunset') {
+        skyColor1 = '#4A2A3A';
+        skyColor2 = '#E8674F';
+      } else if (period === 'night') {
+        skyColor1 = '#090B10';
+        skyColor2 = '#14171F';
+      }
+    }
+
+    document.getElementById('skyEl').style.background='linear-gradient(180deg,'+skyColor1+' 0%,'+skyColor2+' 100%)';
+    document.getElementById('skyEl').style.position='absolute';
+    document.getElementById('skyEl').style.inset='0 0 56% 0';
+    document.getElementById('waterEl').style.background='linear-gradient(180deg,'+z.water[0]+' 0%,'+z.water[1]+' 100%)';
+  }
+
+  var saveTimeout=null;
+  function scheduleSave(){
+    document.getElementById('saveStatus').textContent='Kaydediliyor...';
+    if(saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout=setTimeout(doSave,700);
+  }
+  function doSave(){
+    if(!window.storage){document.getElementById('saveStatus').textContent='Kayıt yok';return;}
+    window.storage.set('castnchill-strip-save-v2', JSON.stringify(state)).then(function(){
+      document.getElementById('saveStatus').textContent='Kaydedildi';
+    }).catch(function(){document.getElementById('saveStatus').textContent='Kayıt hatası';});
+  }
+  function loadSave(){
+    if(!window.storage){init();return;}
+    window.storage.get('castnchill-strip-save-v2').then(function(res){
+      if(res && res.value){
+        try{
+          var loaded=JSON.parse(res.value);
+          state=Object.assign(state,loaded);
+          state.upgrades=Object.assign({power:0,reel:0,luck:0,bait:0,armor:0}, loaded.upgrades||{});
+          state.equipped=Object.assign({hat:'hat_none',shirt:'shirt_default',boat:'boat_dock'}, loaded.equipped||{});
+          state.owned=Object.assign({hat:['hat_none'],shirt:['shirt_default'],boat:['boat_dock']}, loaded.owned||{});
+          state.discoveredFish = loaded.discoveredFish || [];
+          if(state.hour === undefined) state.hour = 6;
+          if(state.weather === undefined) state.weather = 'sunny';
+          if(state.whaleBonusTimer === undefined) state.whaleBonusTimer = 0;
+        }catch(e){}
+      }
+      init();
+    }).catch(function(){init();});
+  }
+
+  var lastTick=Date.now();
+  function tick(){
+    var now=Date.now();
+    var dt=now-lastTick;
+    lastTick=now;
+    if(!state.paused){
+      var cyc=currentCycleMs();
+      state.progress += dt/cyc;
+      if(state.progress>=1){
+        state.progress-=1;
+        processCycle();
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  var swimX=0, swimDir=1;
+  function swim(){
+    swimX += swimDir*0.4;
+    if(swimX>76){swimDir=-1;}
+    if(swimX<0){swimDir=1;}
+    var sf=document.getElementById('swimFish');
+    if(sf){
+      sf.style.left=swimX+'px';
+      sf.style.transform = swimDir>0 ? 'scaleX(1)' : 'scaleX(-1)';
+    }
+    requestAnimationFrame(swim);
+  }
+
+  function resetTabs(){
+    var tabs = ['tabUpg', 'tabCos', 'tabLog', 'tabDev'];
+    var views = ['viewUpg', 'viewCos', 'viewLog', 'viewDev'];
+    tabs.forEach(function(t){ document.getElementById(t).classList.remove('active'); });
+    views.forEach(function(v){ document.getElementById(v).style.display = 'none'; });
+  }
+
+  document.getElementById('stripBar').addEventListener('click', function(){
+    state.panelOpen=!state.panelOpen;
+    document.getElementById('panel').classList.toggle('open', state.panelOpen);
+    document.getElementById('chevron').classList.toggle('open', state.panelOpen);
+    scheduleSave();
+  });
+
+  document.getElementById('tabUpg').addEventListener('click', function(e){
+    e.stopPropagation(); resetTabs(); state.activeTab='upg';
+    document.getElementById('tabUpg').classList.add('active');
+    document.getElementById('viewUpg').style.display='block';
+  });
+  document.getElementById('tabCos').addEventListener('click', function(e){
+    e.stopPropagation(); resetTabs(); state.activeTab='cos';
+    document.getElementById('tabCos').classList.add('active');
+    document.getElementById('viewCos').style.display='block';
+  });
+  document.getElementById('tabLog').addEventListener('click', function(e){
+    e.stopPropagation(); resetTabs(); state.activeTab='log';
+    document.getElementById('tabLog').classList.add('active');
+    document.getElementById('viewLog').style.display='block';
+    renderLogGrid();
+  });
+  document.getElementById('tabDev').addEventListener('click', function(e){
+    e.stopPropagation(); resetTabs(); state.activeTab='dev';
+    document.getElementById('tabDev').classList.add('active');
+    document.getElementById('viewDev').style.display='block';
+  });
+
+  document.getElementById('devGoldBtn').addEventListener('click', function(e){
+    e.stopPropagation(); state.gold += 100000000000;
+    renderStats(); renderUpgrades(); scheduleSave();
+  });
+  document.getElementById('devLevelBtn').addEventListener('click', function(e){
+    e.stopPropagation(); state.level += 1;
+    if(state.level%20===0 && !state.bossActive){ spawnBoss(); }
+    renderStats(); renderUpgrades(); scheduleSave();
+  });
+  document.getElementById('devCosBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    HATS.forEach(function(h){ if(state.owned.hat.indexOf(h.id)===-1) state.owned.hat.push(h.id); });
+    SHIRTS.forEach(function(s){ if(state.owned.shirt.indexOf(s.id)===-1) state.owned.shirt.push(s.id); });
+    BOATS.forEach(function(b){ if(state.owned.boat.indexOf(b.id)===-1) state.owned.boat.push(b.id); });
+    renderCosmeticLists(); scheduleSave();
+  });
+  document.getElementById('resetBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    state={gold:0,xp:0,level:1,zoneIndex:0,hp:100,maxHp:100,hour:6,weather:'sunny',whaleBonusTimer:0,bossActive:false,bossHp:0,bossMaxHp:0,bossTier:0,cycleMs:3000,progress:0,paused:false,upgrades:{power:0,reel:0,luck:0,bait:0,armor:0},equipped:{hat:'hat_none',shirt:'shirt_default',boat:'boat_dock'},owned:{hat:['hat_none'],shirt:['shirt_default'],boat:['boat_dock']},discoveredFish:[],panelOpen:state.panelOpen,activeTab:state.activeTab};
+    document.getElementById('whaleEvent').style.display = 'none';
+    document.getElementById('chestEvent').style.display = 'none';
+    applyZoneVisuals(); applyEquippedVisuals();
+    renderStats(); renderUpgrades(); renderCosmeticLists(); renderLogGrid(); scheduleSave();
+  });
+
+  function init(){
+    rippleEl=document.getElementById('rippleMini');
+    toastEl=document.getElementById('toast');
+    rodEl=document.getElementById('rod');
+    bobberEl=document.getElementById('bobber');
+    flineEl=document.getElementById('fline');
+
+    applyZoneVisuals();
+    applyEquippedVisuals();
+    renderStats();
+    renderUpgrades();
+    renderCosmeticLists();
+    renderLogGrid();
+
+    document.getElementById('panel').classList.toggle('open', state.panelOpen);
+    document.getElementById('chevron').classList.toggle('open', state.panelOpen);
+    
+    resetTabs();
+    if(state.activeTab === 'cos') {
+      document.getElementById('tabCos').classList.add('active');
+      document.getElementById('viewCos').style.display='block';
+    } else if(state.activeTab === 'log') {
+      document.getElementById('tabLog').classList.add('active');
+      document.getElementById('viewLog').style.display='block';
+    } else if(state.activeTab === 'dev') {
+      document.getElementById('tabDev').classList.add('active');
+      document.getElementById('viewDev').style.display='block';
+    } else {
+      document.getElementById('tabUpg').classList.add('active');
+      document.getElementById('viewUpg').style.display='block';
+    }
+
+    lastTick=Date.now();
+    requestAnimationFrame(tick);
+    requestAnimationFrame(swim);
+  }
+
+  loadSave();
+})();
+</script>
+</body>
+</html>

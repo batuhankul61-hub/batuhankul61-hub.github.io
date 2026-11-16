@@ -11,6 +11,8 @@ export type Project = {
   stack: string[];
   /** Short accent used for cards without a screenshot. */
   mark: string;
+  /** Square app icon, shown in the desk scene's Projects window. */
+  logo?: string;
   hue: number;
   /** Full-width card on the home page. */
   wide?: boolean;
@@ -19,6 +21,8 @@ export type Project = {
   image?: { src: string; alt: L };
   gallery?: { src: string; alt: L }[];
   demo?: string;
+  /** Screenshots shown in the desk PC's demo viewer. */
+  shots?: { src: string; alt: L }[];
   credit?: L;
   /** Measured numbers shown on the card and the detail page. */
   results?: { value: string; label: L }[];
@@ -36,6 +40,7 @@ export const projects: Project[] = [
     year: "2026",
     stack: ["C# / .NET", "OOP", "LLM Agents", "MCP", "PowerShell", "Gemini", "Ollama", "Claude"],
     mark: "KUL",
+    logo: "/projects/logos/kul-ai-netcad.svg",
     hue: 210,
     wide: true,
     image: {
@@ -76,6 +81,7 @@ export const projects: Project[] = [
     year: "2026",
     stack: ["Java", "Android TV", "JUnit", "Claude Code"],
     mark: "TV",
+    logo: "/projects/logos/kavunos.svg",
     hue: 120,
     wide: true,
     image: {
@@ -96,6 +102,11 @@ export const projects: Project[] = [
       { value: "669 → 320 ms", label: { tr: "Ana ekrana dönüş", en: "Return to home" } },
       { value: "1244 → 450 ms", label: { tr: "Yeniden açılış", en: "Reopen" } },
       { value: "126 → 63–100 MB", label: { tr: "Bellek", en: "Memory" } },
+    ],
+    shots: [
+      { src: "/desk/tv/0.jpg", alt: { tr: "Ana ekran: gün batımı duvar kâğıdı ve uygulama sırası", en: "Home screen: sunset wallpaper and app row" } },
+      { src: "/desk/tv/1.jpg", alt: { tr: "Önizleme kartı: Spotify'da çalan şarkı", en: "Preview card: a song playing on Spotify" } },
+      { src: "/desk/tv/2.jpg", alt: { tr: "Uygulama ızgarası", en: "App grid" } },
     ],
     status: { tr: "Açık kaynak", en: "Open source" },
     tagline: { tr: "2 GB RAM'li TV çubukları için hızlı Android TV başlatıcısı", en: "A fast Android TV launcher for 2 GB RAM sticks" },
@@ -125,12 +136,17 @@ export const projects: Project[] = [
     year: "2026",
     stack: ["Python", "Google ADK", "RAG", "FastAPI", "Gemini Live", "pytest"],
     mark: "MAR",
+    logo: "/projects/logos/mario.svg",
     hue: 0,
     wide: true,
     results: [
       { value: "0.972", label: { tr: "Yanıt doğruluğu", en: "Answer accuracy" } },
       { value: "1.0", label: { tr: "hit@3", en: "hit@3" } },
       { value: "185", label: { tr: "pytest testi", en: "pytest tests" } },
+    ],
+    shots: [
+      { src: "/projects/shots/mario-1.jpg", alt: { tr: "Sesli sohbet: hava durumu ve okunmamış mailler", en: "Voice chat: the weather and unread mail" } },
+      { src: "/projects/shots/mario-2.jpg", alt: { tr: "Yıkıcı işlemden önce sesli onay", en: "Spoken confirmation before a destructive action" } },
     ],
     status: { tr: "Günlük kullanımda", en: "In daily use" },
     tagline: { tr: "RAG hafızalı sesli yapay zekâ ajanı", en: "A voice AI agent with RAG memory" },
@@ -162,8 +178,13 @@ export const projects: Project[] = [
     year: "2026",
     stack: ["JavaScript", "HTML / CSS", "FastAPI", "REST API", "WebSocket", "Gemini Live", "PWA", "GitHub Actions"],
     mark: "LUC",
+    logo: "/projects/logos/lucia.svg",
     hue: 280,
+    demo: "https://batuhankul61-hub.github.io/lucia/",
     results: [{ value: "32", label: { tr: "CI'da pytest testi", en: "pytest tests in CI" } }],
+    shots: [
+      { src: "/projects/shots/lucia-1.jpg", alt: { tr: "Seviye ve konuşma senaryosu seçimi", en: "Choosing a level and a speaking scenario" } },
+    ],
     status: { tr: "Çalışıyor", en: "Working" },
     tagline: { tr: "Gerçek zamanlı İngilizce konuşma koçu", en: "A real-time English speaking coach" },
     summary: {
@@ -192,6 +213,7 @@ export const projects: Project[] = [
     year: "2026",
     stack: ["C# / .NET", "AutoCAD API", "LLM Agents"],
     mark: "CAD",
+    logo: "/projects/logos/kul-ai-cad.svg",
     hue: 25,
     results: [{ value: "43", label: { tr: "araç", en: "tools" } }],
     status: { tr: "Geliştiriliyor", en: "In development" },
@@ -224,8 +246,13 @@ export const projects: Project[] = [
     year: "2026",
     stack: ["HTML / CSS / JS", "PWA", "Service Worker"],
     mark: "₺",
+    logo: "/projects/logos/harita-maliyet.png",
     hue: 150,
     demo: "https://batuhankul61-hub.github.io/harita-maliyet-hesaplayici/",
+    shots: [
+      { src: "/projects/shots/harita-maliyet-1.jpg", alt: { tr: "Ekipman amortismanı ve iş bilgileri formu", en: "Equipment depreciation and job details form" } },
+      { src: "/projects/shots/harita-maliyet-2.jpg", alt: { tr: "Hesaplanan maliyet dökümü ve teklif fiyatı", en: "Calculated cost breakdown and quote price" } },
+    ],
     status: { tr: "Yayında", en: "Live" },
     tagline: { tr: "Harita işleri için çevrimdışı maliyet ve teklif hesaplayıcı", en: "An offline cost and quote calculator for survey jobs" },
     summary: {
@@ -248,33 +275,39 @@ export const projects: Project[] = [
     },
   },
   {
-    slug: "batumtis",
-    name: "batumtis",
-    repo: "batumtis",
+    slug: "servisdesk",
+    name: "ServisDesk",
     year: "2026",
-    stack: ["Python", "Playwright", "Claude Code", "SQLite"],
-    mark: "JOB",
+    stack: ["Python", "REST API", "LLM Agents", "Gemini", "Tkinter"],
+    mark: "SVC",
+    logo: "/projects/logos/servisdesk.svg",
     hue: 45,
     half: true,
-    results: [{ value: "8", label: { tr: "ilan kaynağı", en: "job sources" } }],
-    status: { tr: "Kişisel kullanımda", en: "In personal use" },
-    tagline: { tr: "Uzaktan iş başvuru botu", en: "A remote job application bot" },
+    demo: "/demo/servisdesk/index.html",
+    results: [{ value: "66 / 72", label: { tr: "talep otomatik önerildi", en: "requests auto-suggested" } }],
+    shots: [
+      { src: "/projects/shots/servisdesk-1.jpg", alt: { tr: "Portal: 72 kurgusal talep, SLA ve atama durumu", en: "Portal: 72 fictional requests with SLA and assignment" } },
+      { src: "/projects/shots/servisdesk-2.jpg", alt: { tr: "Karar motorunun önerisi ve gerekçesi; onay insanda", en: "The engine's suggestion and reason; a person approves" } },
+      { src: "/projects/shots/servisdesk-3.jpg", alt: { tr: "SLA'sı geçmiş talepler için firmaya göre gecikme maili", en: "Overdue follow-up email grouped by contractor" } },
+    ],
+    status: { tr: "Canlı demo", en: "Live demo" },
+    tagline: { tr: "Bakım/onarım taleplerini taşeronlara yönlendiren ajan", en: "An agent that routes repair requests to contractors" },
     summary: {
-      tr: "8 kaynaktan uzaktan iş ilanlarını toplayan, profile göre puanlayan ve uygun olanlara e-postayla başvuran ya da LinkedIn, Indeed ve Kariyer.net'te formu dolduran bir Python botu.",
-      en: "A Python bot that collects remote job postings from 8 sources, scores them against a profile, and sends tailored email applications or fills application forms on LinkedIn, Indeed and Kariyer.net.",
+      tr: "Bir perakende zincirinin servis masasına gelen mağaza arıza taleplerini okuyan, kurallar ve isteğe bağlı bir LLM ile hangi taşeron firmaya gitmesi gerektiğini gerekçesiyle öneren, insan onayından sonra portala yazan ve gecikme maillerini hazırlayan bir masaüstü ajanı. Kurgusal veriyle çalışan demosu tarayıcıda denenebiliyor.",
+      en: "A desktop agent for a retail chain's service desk: it reads store repair requests, suggests which contractor should take each one with a reason, using rules and an optional LLM, writes to the portal only after a human approves, and drafts follow-up emails for overdue work. A demo on fictional data runs in the browser.",
     },
     highlights: {
       tr: [
-        "Günlük çalışmada Claude Code her ilana 0–10 uygunluk puanı veriyor",
-        "Eşiği geçen ilanlar için tek sayfalık özel CV ve ön yazı üretiliyor",
-        "Her ilan SQLite'ta durum sözlüğüyle izleniyor (yeni, onaylı, başvuruldu, manuel, hatalı)",
-        "Her gün başvuruları, manuel işleri ve hataları listeleyen e-posta raporu",
+        "Karar motoru hiçbir talebi kendi başına reddetmiyor: ya gerekçeyle yönlendir ya da insana bırak",
+        "LLM yalnızca öneri üretiyor; kuralların izin vermediği firmaya yönlendiremiyor, cevap gelmezse yerel motora düşüyor",
+        "Portala yazma varsayılan olarak kapalı ve onaya bağlı; her yazma geri okunup doğrulanıyor",
+        "SLA'sı geçmiş talepler için firmaya göre gruplanmış .eml mail taslakları",
       ],
       en: [
-        "A daily run where Claude Code scores each posting's fit from 0 to 10",
-        "A one-page tailored CV and cover letter for postings above the threshold",
-        "Every posting tracked in SQLite against a status dictionary (new, approved, applied, manual, failed)",
-        "A daily email report of applications, manual tasks and failures",
+        "The decision engine never rejects on its own: it either routes with a reason or hands the request to a person",
+        "The LLM only suggests; it cannot route to a contractor the rules don't allow, and falls back to the local engine",
+        "Portal writes are off by default and gated on approval; every write is read back and verified",
+        "Overdue requests become .eml drafts grouped by contractor",
       ],
     },
   },
@@ -284,8 +317,14 @@ export const projects: Project[] = [
     year: "2026",
     stack: ["JavaScript", "Electron"],
     mark: "C&C",
+    logo: "/projects/logos/cast-and-chill.svg",
     hue: 195,
     half: true,
+    demo: "/demo/cast-and-chill/index.html",
+    shots: [
+      { src: "/projects/shots/cast-and-chill-1.jpg", alt: { tr: "Görev çubuğu şeridi ve yükseltmeler", en: "Taskbar strip and upgrades" } },
+      { src: "/projects/shots/cast-and-chill-2.jpg", alt: { tr: "Boss'lardan düşen kozmetikler", en: "Cosmetics dropped by bosses" } },
+    ],
     status: { tr: "Yan proje", en: "Side project" },
     tagline: { tr: "Windows görev çubuğu için idle balıkçılık oyunu", en: "An idle fishing game for the Windows taskbar" },
     summary: {

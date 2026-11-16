@@ -1,7 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { B, Ball, Cyl, photo, type V3 } from "./prims";
 
 /* ---------- Shared bits ---------- */
@@ -547,7 +549,7 @@ export function KalanchoePot({ p }: { p: V3 }) {
   );
 }
 
-/** Zebra haworthia rosette in a jointed wooden box, plus the blue pot in front. */
+/** Zebra haworthia rosette in a jointed wooden box. */
 export function SucculentBox({ p }: { p: V3 }) {
   const blades = useMemo(() => {
     const r = rng(9);
@@ -572,17 +574,6 @@ export function SucculentBox({ p }: { p: V3 }) {
           </mesh>
         </group>
       ))}
-      <group position={[0.01, 0, 0.085]}>
-        <mesh position={[0, 0.026, 0]}>
-          <cylinderGeometry args={[0.034, 0.028, 0.052, 36]} />
-          <meshStandardMaterial color="#1f3fc4" roughness={0.35} />
-        </mesh>
-        <mesh position={[0, 0.05, 0]}>
-          <cylinderGeometry args={[0.032, 0.03, 0.012, 36]} />
-          <meshStandardMaterial color="#8a5a3c" roughness={0.9} />
-        </mesh>
-        <Cyl p={[0, 0.0565, 0]} rad={0.029} h={0.002} c="#251912" />
-      </group>
     </group>
   );
 }
@@ -665,6 +656,203 @@ export function Boot({ p, r, upper = "#d6e23a", heel = "#151515", stud = "#e0567
       </mesh>
       {[0, 1, 2, 3, 4].map((i) => (
         <B key={i} p={[0.08 + i * 0.022, 0.082 - i * 0.006, 0]} s={[0.004, 0.003, 0.07]} r={[0, 0, -0.25]} c="#fafafa" rough={0.6} />
+      ))}
+    </group>
+  );
+}
+
+/* ---------- Wall TV ---------- */
+
+const TV_SLIDES = 6;
+const TV_HOLD = 3800;
+const TV_FADE = 0.7;
+
+/** Wall-mounted TV cycling through kavunOS screenshots with a crossfade. */
+export function WallTV({ p, w }: { p: V3; w: number }) {
+  const h = (w * 9) / 16;
+  const texs = useMemo(() => Array.from({ length: TV_SLIDES }, (_, i) => photo(`tv/${i}`)), []);
+  const base = useRef<THREE.MeshBasicMaterial>(null);
+  const top = useRef<THREE.MeshBasicMaterial>(null);
+  const slide = useRef({ cur: 0, fade: -1 });
+  const invalidate = useThree((s) => s.invalidate);
+
+  useEffect(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      const s = slide.current;
+      const next = (s.cur + 1) % TV_SLIDES;
+      if (reduced) {
+        s.cur = next;
+        if (base.current) base.current.map = texs[next];
+      } else {
+        if (top.current) top.current.map = texs[next];
+        s.fade = 0;
+      }
+      invalidate();
+    }, TV_HOLD);
+    return () => clearInterval(id);
+  }, [texs, invalidate]);
+
+  useFrame((_, dt) => {
+    const s = slide.current;
+    if (s.fade < 0 || !top.current || !base.current) return;
+    s.fade = Math.min(1, s.fade + Math.min(dt, 0.05) / TV_FADE);
+    top.current.opacity = s.fade;
+    if (s.fade >= 1) {
+      s.cur = (s.cur + 1) % TV_SLIDES;
+      base.current.map = texs[s.cur];
+      top.current.opacity = 0;
+      s.fade = -1;
+    }
+    invalidate();
+  });
+
+  return (
+    <group position={p}>
+      {/* Wall bracket, slim body and a thin bezel */}
+      <B p={[0, 0, 0.02]} s={[0.3, 0.2, 0.04]} c="#141416" rough={0.6} />
+      <B p={[0, 0, 0.055]} s={[w + 0.024, h + 0.024, 0.03]} c="#0b0b0d" rough={0.3} gloss={0.7} />
+      <mesh position={[0, 0, 0.0705]}>
+        <planeGeometry args={[w, h]} />
+        <meshBasicMaterial ref={base} map={texs[0]} color="#dcdcdc" toneMapped={false} />
+      </mesh>
+      <mesh position={[0, 0, 0.0708]}>
+        <planeGeometry args={[w, h]} />
+        <meshBasicMaterial ref={top} map={texs[1]} color="#dcdcdc" toneMapped={false} transparent opacity={0} depthWrite={false} />
+      </mesh>
+      <mesh position={[w / 2 - 0.03, -h / 2 - 0.006, 0.0712]}>
+        <circleGeometry args={[0.0035, 12]} />
+        <meshBasicMaterial color="#ff5a3c" toneMapped={false} />
+      </mesh>
+      {/* Screen glow, kept below the panel so it spills onto the wall and console without a hot spot on the bezel. */}
+      <pointLight position={[0, -h / 2 - 0.12, 0.22]} color="#ffb98a" intensity={0.3} distance={1.3} decay={2} />
+    </group>
+  );
+}
+
+/** Acoustic fabric over a perforated grille: staggered dark holes on a woven grey, tiled across the front. */
+function grilleTex() {
+  const t = canvasTex("soundbar-grille", 128, 128, (c) => {
+    c.fillStyle = "#6a6a72";
+    c.fillRect(0, 0, 128, 128);
+    // Weave: faint alternating threads.
+    for (let i = 0; i < 128; i += 2) {
+      c.fillStyle = i % 4 ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.05)";
+      c.fillRect(0, i, 128, 1);
+      c.fillRect(i, 0, 1, 128);
+    }
+    c.fillStyle = "#101012";
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const x = col * 16 + (row % 2 ? 8 : 0) + 8;
+        const y = row * 16 + 8;
+        c.beginPath();
+        c.arc(x % 128, y, 4.8, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+  });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(20, 1.45);
+  return t;
+}
+
+/** Two-channel soundbar the monitor sits on: fabric-wrapped front, rounded ends, top buttons and a status LED. */
+export function Soundbar({ p, w = 0.66, h = 0.06, d = 0.12 }: { p: V3; w?: number; h?: number; d?: number }) {
+  const shell = useMemo(() => new RoundedBoxGeometry(w, h, d, 6, Math.min(h, d) * 0.42), [w, h, d]);
+  const grille = grilleTex();
+  const fw = w - h * 0.7;
+  return (
+    <group position={p}>
+      <mesh geometry={shell} castShadow receiveShadow>
+        <meshStandardMaterial color="#0f0f11" roughness={0.6} />
+      </mesh>
+      {/* Fabric front, slightly proud of the shell so it reads as a separate cover. */}
+      <mesh position={[0, -0.002, d / 2 + 0.0008]}>
+        <planeGeometry args={[fw, h * 0.74]} />
+        <meshStandardMaterial map={grille} bumpMap={grille} bumpScale={2} color="#9a9aa4" roughness={1} />
+      </mesh>
+      {/* Thin seam where the fabric meets the top shell. */}
+      <B p={[0, h * 0.37 - 0.002, d / 2 - 0.001]} s={[fw, 0.0025, 0.003]} c="#0a0a0b" rough={0.4} />
+      {/* Status LED glowing through the fabric. */}
+      <mesh position={[w * 0.38, -h * 0.22, d / 2 + 0.0015]}>
+        <circleGeometry args={[0.0028, 16]} />
+        <meshBasicMaterial color="#f2f6ff" toneMapped={false} />
+      </mesh>
+      {/* Top controls on the right end: power, volume down, volume up, Bluetooth. */}
+      {[0, 1, 2, 3].map((i) => (
+        <mesh key={i} position={[w * 0.27 + i * 0.026, h / 2 + 0.0008, d * 0.08]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.0055, 0.0068, 24]} />
+          <meshStandardMaterial color="#4a4a50" roughness={0.5} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** Low media console under the TV, with a streaming stick and a remote. */
+export function MediaConsole({ p, w }: { p: V3; w: number }) {
+  return (
+    <group position={p}>
+      <B p={[0, 0.22, 0]} s={[w, 0.03, 0.4]} c="#3a2a20" rough={0.6} />
+      <B p={[0, 0.12, 0.005]} s={[w - 0.02, 0.17, 0.39]} c="#2a1e17" rough={0.7} />
+      <B p={[-w / 4, 0.12, 0.2]} s={[w / 2 - 0.03, 0.15, 0.006]} c="#4a3527" rough={0.55} />
+      <B p={[w / 4, 0.12, 0.2]} s={[w / 2 - 0.03, 0.15, 0.006]} c="#4a3527" rough={0.55} />
+      <B p={[0, 0.02, 0]} s={[w - 0.04, 0.04, 0.36]} c="#151517" rough={0.8} />
+      {/* Streaming stick box and remote */}
+      <B p={[-0.25, 0.26, 0.02]} s={[0.12, 0.04, 0.1]} c="#16161a" rough={0.4} gloss={0.5} />
+      <B p={[0.2, 0.243, 0.08]} s={[0.04, 0.012, 0.15]} c="#1b1b1f" rough={0.5} r={[0, 0.35, 0]} />
+    </group>
+  );
+}
+
+/* ---------- Top shelf ---------- */
+
+/** Backwards side stripe: the tip points at the toe, the hook sits by the heel. */
+function stripeGeo() {
+  const s = new THREE.Shape();
+  s.moveTo(0.05, 0.016);
+  s.quadraticCurveTo(0, -0.012, -0.03, -0.008);
+  s.quadraticCurveTo(-0.043, -0.006, -0.037, 0.005);
+  s.quadraticCurveTo(-0.025, -0.001, 0, 0.001);
+  s.quadraticCurveTo(0.025, 0.003, 0.05, 0.016);
+  return new THREE.ShapeGeometry(s, 12);
+}
+
+/** Low-top sneaker in a sail / mocha suede colourway with a reversed black side stripe. Toe points to +x. */
+export function Sneaker({ p, ry = 0 }: { p: V3; ry?: number }) {
+  const stripe = useMemo(stripeGeo, []);
+  const sail = "#ece2c8";
+  const mocha = "#5a3a28";
+  const dark = "#2b1b12";
+  return (
+    <group position={p} rotation={[0, ry, 0]}>
+      {/* Gum-brown outsole and sail midsole */}
+      <B p={[0, -0.032, 0]} s={[0.175, 0.008, 0.068]} c="#4a3324" rough={0.8} />
+      <B p={[0, -0.02, 0]} s={[0.172, 0.016, 0.066]} c={sail} rough={0.7} />
+      {/* Sail leather vamp and rounded toe */}
+      <B p={[0.015, 0.003, 0]} s={[0.07, 0.03, 0.062]} c={sail} rough={0.55} />
+      <mesh position={[0.05, -0.004, 0]} scale={[1.15, 0.55, 0.97]} castShadow receiveShadow>
+        <sphereGeometry args={[0.032, 28, 18]} />
+        <meshStandardMaterial color={sail} roughness={0.55} />
+      </mesh>
+      {/* Mocha suede mudguard, heel and eyestay */}
+      <B p={[0.058, -0.007, 0]} s={[0.052, 0.011, 0.066]} c={mocha} rough={0.95} />
+      <B p={[-0.05, 0.008, 0]} s={[0.075, 0.04, 0.064]} c={mocha} rough={0.95} />
+      <B p={[-0.054, 0.03, 0]} s={[0.062, 0.008, 0.066]} c={dark} rough={0.9} />
+      <B p={[0.005, 0.024, 0]} s={[0.07, 0.008, 0.05]} c={mocha} rough={0.95} r={[0, 0, -0.22]} />
+      {/* Tongue with a small red tag, and sail laces */}
+      <B p={[-0.02, 0.036, 0]} s={[0.035, 0.02, 0.03]} c={sail} rough={0.6} r={[0, 0, 0.3]} />
+      <B p={[-0.017, 0.042, 0]} s={[0.012, 0.008, 0.031]} c="#b0202a" rough={0.6} r={[0, 0, 0.3]} />
+      {[0.03, 0.012, -0.006].map((x) => (
+        <B key={x} p={[x, 0.029 - (x - 0.005) * 0.22, 0]} s={[0.004, 0.004, 0.044]} c="#f3eee2" rough={0.7} />
+      ))}
+      {/* Reversed black stripe on both sides */}
+      {[-1, 1].map((sd) => (
+        <mesh key={sd} geometry={stripe} position={[-0.008, 0.002, sd * 0.0335]}>
+          <meshStandardMaterial color="#141210" roughness={0.45} side={THREE.DoubleSide} />
+        </mesh>
       ))}
     </group>
   );

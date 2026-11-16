@@ -6,7 +6,7 @@ import { deskText, spotifyUrl } from "@/content/desk";
 import { projects } from "@/content/projects";
 import { type Lang, paths, site, t } from "@/content/site";
 
-type Kind = "projects" | "project" | "about" | "contact";
+type Kind = "projects" | "project" | "demo" | "about" | "contact";
 type Win = { id: string; kind: Kind; slug?: string; x: number; y: number };
 
 const Glyph = ({ kind, mark, hue }: { kind: "folder" | "file" | "link" | "app"; mark?: string; hue?: number }) => (
@@ -18,6 +18,55 @@ const Glyph = ({ kind, mark, hue }: { kind: "folder" | "file" | "link" | "app"; 
     {mark}
   </span>
 );
+
+/** Screenshot slideshow standing in for a live demo inside the desk PC. */
+function DemoViewer({ shots, demo, lang }: { shots: { src: string; alt: Record<Lang, string> }[]; demo?: string; lang: Lang }) {
+  const d = deskText[lang];
+  const [i, setI] = useState(0);
+  const go = (n: number) => setI((n + shots.length) % shots.length);
+  const shot = shots[i];
+  return (
+    <div
+      className="os-demo"
+      tabIndex={0}
+      onKeyDown={(ev) => {
+        if (ev.key === "ArrowRight") go(i + 1);
+        else if (ev.key === "ArrowLeft") go(i - 1);
+      }}
+    >
+      <figure className="os-demo-stage">
+        <img key={shot.src} src={shot.src} alt={shot.alt[lang]} />
+        {shots.length > 1 && (
+          <>
+            <button type="button" className="os-demo-nav is-prev" onClick={() => go(i - 1)} aria-label={d.prev}>
+              ‹
+            </button>
+            <button type="button" className="os-demo-nav is-next" onClick={() => go(i + 1)} aria-label={d.next}>
+              ›
+            </button>
+          </>
+        )}
+      </figure>
+      <div className="os-demo-foot">
+        <p>{shot.alt[lang]}</p>
+        {shots.length > 1 && (
+          <div className="os-demo-dots">
+            {shots.map((s, n) => (
+              <button key={s.src} type="button" aria-label={`${n + 1} / ${shots.length}`} aria-current={n === i} onClick={() => go(n)} />
+            ))}
+          </div>
+        )}
+      </div>
+      {demo && (
+        <div className="os-actions">
+          <a href={demo} className="btn btn-primary" target="_blank" rel="noreferrer">
+            {d.openLive} ↗
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function DesktopOS({ lang, onClose }: { lang: Lang; onClose: () => void }) {
   const d = deskText[lang];
@@ -35,7 +84,7 @@ export function DesktopOS({ lang, onClose }: { lang: Lang; onClose: () => void }
 
   const open = (kind: Kind, slug?: string) =>
     setWins((ws) => {
-      const id = slug ? `project:${slug}` : kind;
+      const id = slug ? `${kind}:${slug}` : kind;
       const found = ws.find((w) => w.id === id);
       if (found) return [...ws.filter((w) => w.id !== id), found];
       const n = ws.length;
@@ -63,8 +112,8 @@ export function DesktopOS({ lang, onClose }: { lang: Lang; onClose: () => void }
   };
 
   const title = (w: Win) =>
-    w.kind === "project"
-      ? (projects.find((p) => p.slug === w.slug)?.name ?? "")
+    w.kind === "project" || w.kind === "demo"
+      ? `${projects.find((p) => p.slug === w.slug)?.name ?? ""}${w.kind === "demo" ? ` · ${d.screenshots}` : ""}`
       : w.kind === "projects"
         ? d.projectsFolder
         : w.kind === "about"
@@ -78,7 +127,11 @@ export function DesktopOS({ lang, onClose }: { lang: Lang; onClose: () => void }
           {projects.map((p) => (
             <li key={p.slug}>
               <button type="button" className="os-icon" onClick={() => open("project", p.slug)}>
-                <Glyph kind="file" mark={p.mark} hue={p.hue} />
+                {p.logo ? (
+                  <img className="os-logo" src={p.logo} alt="" width={44} height={44} decoding="async" />
+                ) : (
+                  <Glyph kind="file" mark={p.mark} hue={p.hue} />
+                )}
                 <span>{p.name}</span>
               </button>
             </li>
@@ -120,14 +173,25 @@ export function DesktopOS({ lang, onClose }: { lang: Lang; onClose: () => void }
                 GitHub
               </a>
             )}
-            {p.demo && (
-              <a href={p.demo} className="btn" target="_blank" rel="noreferrer">
-                {s.project.demo}
-              </a>
+            {p.shots ? (
+              <button type="button" className="btn" onClick={() => open("demo", p.slug)}>
+                {p.demo ? s.project.demo : d.screenshots}
+              </button>
+            ) : (
+              p.demo && (
+                <a href={p.demo} className="btn" target="_blank" rel="noreferrer">
+                  {s.project.demo} ↗
+                </a>
+              )
             )}
           </div>
         </div>
       );
+    }
+    if (w.kind === "demo") {
+      const p = projects.find((x) => x.slug === w.slug);
+      if (!p?.shots) return null;
+      return <DemoViewer shots={p.shots} demo={p.demo} lang={lang} />;
     }
     if (w.kind === "about")
       return (

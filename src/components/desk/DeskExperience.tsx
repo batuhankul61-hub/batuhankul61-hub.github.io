@@ -73,6 +73,7 @@ export function DeskExperience({ lang }: { lang: Lang }) {
         games: spots.games.label[lang],
         football: spots.football.label[lang],
         gym: spots.gym.label[lang],
+        tv: spots.tv.label[lang],
       }) satisfies Record<SpotId, string>,
     [d.pc, lang],
   );
@@ -150,6 +151,11 @@ export function DeskExperience({ lang }: { lang: Lang }) {
                 </li>
               ))}
             </ul>
+          )}
+          {spot.id === "tv" && (
+            <Link href={paths[lang].project("kavunos")} prefetch={false} className="btn btn-primary">
+              {d.openProject} →
+            </Link>
           )}
           {spot.id === "music" && spotifyUrl && (
             <a href={spotifyUrl} className="btn btn-primary" target="_blank" rel="noreferrer">
