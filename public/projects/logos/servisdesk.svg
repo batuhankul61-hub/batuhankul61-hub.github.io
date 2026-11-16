@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="ServisDesk">
+  <rect width="120" height="120" rx="26" fill="#1c1708"/>
+  <g fill="none" stroke="#e3b341" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 60 H52 C62 60 62 38 74 38 H84"/>
+    <path d="M52 60 C62 60 62 82 74 82 H84"/>
+    <path d="M52 60 H84" stroke-opacity=".45"/>
+  </g>
+  <circle cx="30" cy="60" r="9" fill="#e3b341"/>
+  <g fill="#1c1708" stroke="#e3b341" stroke-width="5">
+    <circle cx="90" cy="38" r="7"/><circle cx="90" cy="82" r="7"/>
+  </g>
+  <circle cx="90" cy="60" r="7" fill="#1c1708" stroke="#e3b341" stroke-opacity=".45" stroke-width="5"/>
+</svg>

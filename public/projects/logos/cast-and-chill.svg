@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Cast &amp; Chill">
+  <rect width="120" height="120" rx="26" fill="#0b1d26"/>
+  <path d="M18 92 Q32 84 46 92 T74 92 T102 92" fill="none" stroke="#38bdf8" stroke-opacity=".4" stroke-width="5" stroke-linecap="round"/>
+  <path d="M62 16 V64 a14 14 0 0 1 -28 0 v-6" fill="none" stroke="#7dd3fc" stroke-width="7" stroke-linecap="round"/>
+  <path d="M34 58 l-7 9" stroke="#7dd3fc" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="62" cy="14" r="6" fill="#f97316"/>
+</svg>

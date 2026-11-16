@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Kul AI CAD">
+  <rect width="120" height="120" rx="26" fill="#1f140c"/>
+  <g fill="none" stroke="#f0883e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M60 34 L36 92"/>
+    <path d="M60 34 L84 92"/>
+    <path d="M44 72 Q60 80 76 72" stroke-width="5"/>
+  </g>
+  <circle cx="60" cy="30" r="9" fill="#1f140c" stroke="#f0883e" stroke-width="6"/>
+  <path d="M60 18 V21" stroke="#f0883e" stroke-width="6" stroke-linecap="round"/>
+</svg>
