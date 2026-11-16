@@ -130,15 +130,25 @@ export function keyboardTexture() {
   );
 }
 
-export function labelTexture(text: string, bg: string, fg: string) {
-  return cached(`label:${text}:${bg}`, () =>
-    canvas(256, 256, (c) => {
+/**
+ * Wrap-around tub label. The canvas matches the cylinder's unrolled proportions (2πr : h),
+ * and the text sits at u = 0.5 so it reads on the side the tub is turned to show.
+ */
+export function labelTexture(text: string, bg: string, fg: string, sub = "") {
+  return cached(`label:${text}:${sub}:${bg}`, () =>
+    canvas(1024, 384, (c) => {
       c.fillStyle = bg;
-      c.fillRect(0, 0, 256, 256);
+      c.fillRect(0, 0, 1024, 384);
       c.fillStyle = fg;
-      c.font = "900 64px system-ui, sans-serif";
+      c.fillRect(0, 0, 1024, 46);
+      c.fillRect(0, 338, 1024, 46);
       c.textAlign = "center";
-      c.fillText(text, 128, 150);
+      c.font = "900 128px system-ui, sans-serif";
+      c.fillText(text, 512, 222);
+      if (sub) {
+        c.font = "700 44px system-ui, sans-serif";
+        c.fillText(sub.split("").join(" "), 512, 300);
+      }
     }),
   );
 }

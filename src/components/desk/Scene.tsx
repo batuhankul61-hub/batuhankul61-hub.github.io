@@ -489,16 +489,11 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
       <Cyl p={[0.72, 0.785, 0.22]} rad={0.032} h={0.035} c="#f1f1f1" />
       <SucculentBox p={[0.7, 0.768, 0.47]} />
 
-      {/* Cabinet top: plant, router, whey, lamp */}
+      {/* Cabinet top: plant, router, whey */}
       <KalanchoePot p={[0.94, 0.74, 0.43]} />
       <B p={[1.03, 0.82, 0.24]} s={[0.05, 0.16, 0.18]} c="#18181a" r={[0, -0.5, 0]} rough={0.4} />
-      <Cyl p={[1.25, 0.84, 0.14]} rad={0.085} h={0.2} map={labelTexture("WHEY", "#f4f4f2", "#1b2550")} rough={0.4} r={[0, -1.2, 0]} />
+      <Cyl p={[1.25, 0.84, 0.14]} rad={0.085} h={0.2} map={labelTexture("WHEY", "#f4f4f2", "#1b2550", "PROTEIN")} rough={0.4} r={[0, 2.95, 0]} />
       <Cyl p={[1.25, 0.95, 0.14]} rad={0.088} h={0.03} c="#ecebe8" />
-      <Ball p={[1.3, 0.81, 0.4]} rad={0.07} c="#2a36a8" />
-      <mesh position={[1.3, 0.89, 0.36]} rotation={[0, Math.PI / 2, 0]}>
-        <torusGeometry args={[0.05, 0.014, 16, 48, Math.PI]} />
-        <meshStandardMaterial color="#101014" />
-      </mesh>
 
       {/* Headphones on a wall hook, and the neon bolt */}
       <B p={[0.86, 1.29, 0.008]} s={[0.035, 0.05, 0.012]} c="#1a1a1c" rough={0.4} />
