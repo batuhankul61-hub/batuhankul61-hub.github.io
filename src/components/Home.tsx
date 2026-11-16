@@ -8,11 +8,13 @@ import {
   type Lang,
   languages,
   metrics,
+  otherLang,
   paths,
   site,
   stack,
   t,
 } from "@/content/site";
+import { personJsonLdHtml } from "@/lib/meta";
 import { Cover } from "./Cover";
 import { Footer, Header } from "./Header";
 
@@ -24,10 +26,14 @@ export const Arrow = () => (
 
 export function Home({ lang }: { lang: Lang }) {
   const s = t[lang];
-  const other: Lang = lang === "tr" ? "en" : "tr";
+  const other = otherLang(lang);
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: personJsonLdHtml(lang) }}
+      />
       <Header lang={lang} altHref={paths[other].home} />
       <main>
         <section className="hero container">

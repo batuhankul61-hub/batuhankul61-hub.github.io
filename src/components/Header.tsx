@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { type Lang, paths, site, t } from "@/content/site";
+import { type Lang, otherLang, paths, site, t } from "@/content/site";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function Header({ lang, altHref }: { lang: Lang; altHref: string }) {
@@ -19,7 +19,7 @@ export function Header({ lang, altHref }: { lang: Lang; altHref: string }) {
           <Link href={`${home}#contact`}>{s.nav.contact}</Link>
         </div>
         <div className="nav-actions">
-          <Link href={altHref} className="icon-btn lang" aria-label={s.switchLangLabel} hrefLang={lang === "tr" ? "en" : "tr"}>
+          <Link href={altHref} className="icon-btn lang" aria-label={s.switchLangLabel} hrefLang={otherLang(lang)}>
             {s.switchLang}
           </Link>
           <ThemeToggle label={s.themeLabel} />

@@ -1024,3 +1024,23 @@ p {
 .project > .cover-gen {
   aspect-ratio: 16 / 4;
 }
+
+/* ---------- 404 ---------- */
+.notfound {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  padding-block: 64px;
+}
+.notfound h1 {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  display: flex;
+  flex-direction: column;
+}
+.notfound .dim {
+  color: var(--text-faint);
+}

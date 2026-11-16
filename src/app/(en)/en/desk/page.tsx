@@ -1,12 +1,9 @@
-import type { Metadata } from "next";
 import { DeskExperience } from "@/components/desk/DeskExperience";
-import { deskText } from "@/content/desk";
+import { deskPaths, deskText } from "@/content/desk";
+import { otherLang } from "@/content/site";
+import { deskMetadata } from "@/lib/meta";
 
-export const metadata: Metadata = {
-  title: `${deskText.en.welcome} · Batuhan Kul`,
-  description: deskText.en.intro,
-  alternates: { canonical: "/en/desk/", languages: { tr: "/masa/" } },
-};
+export const metadata = deskMetadata("en", deskText.en, deskPaths.en, deskPaths[otherLang("en")]);
 
 export default function Page() {
   return <DeskExperience lang="en" />;

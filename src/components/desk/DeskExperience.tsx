@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { deskPaths, deskText, modelCredits, type SpotId, spotifyUrl, spots } from "@/content/desk";
 import models from "@/content/models.json";
 import { projects } from "@/content/projects";
-import { type Lang, paths, site } from "@/content/site";
+import { type Lang, otherLang, paths, site } from "@/content/site";
 import { DesktopOS } from "./DesktopOS";
 import type { Phase } from "./Scene";
 import "./desk.css";
@@ -16,7 +16,7 @@ const credits = modelCredits(models);
 
 export function DeskExperience({ lang }: { lang: Lang }) {
   const d = deskText[lang];
-  const other: Lang = lang === "tr" ? "en" : "tr";
+  const other = otherLang(lang);
   const [phase, setPhase] = useState<Phase>("intro");
   const [osOpen, setOsOpen] = useState(false);
   const [ready, setReady] = useState(false);

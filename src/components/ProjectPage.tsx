@@ -1,14 +1,15 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getProject, projects } from "@/content/projects";
-import { type Lang, paths, site, t } from "@/content/site";
+import { type Lang, otherLang, paths, site, t } from "@/content/site";
+import { ogImage } from "@/lib/meta";
 import { Cover } from "./Cover";
 import { Footer, Header } from "./Header";
 
 export function projectMetadata(lang: Lang, slug: string): Metadata {
   const p = getProject(slug);
   if (!p) return {};
-  const other: Lang = lang === "tr" ? "en" : "tr";
+  const other = otherLang(lang);
   return {
     title: `${p.name} · ${site.name}`,
     description: p.tagline[lang],
@@ -16,14 +17,22 @@ export function projectMetadata(lang: Lang, slug: string): Metadata {
       canonical: paths[lang].project(slug),
       languages: { [other]: paths[other].project(slug) },
     },
-    openGraph: { title: p.name, description: p.tagline[lang], images: p.image ? [p.image.src] : undefined },
+    openGraph: {
+      title: `${p.name} · ${site.name}`,
+      description: p.tagline[lang],
+      siteName: site.name,
+      locale: lang === "tr" ? "tr_TR" : "en_US",
+      type: "article",
+      images: p.image ? [{ url: p.image.src, alt: p.image.alt[lang] }] : [ogImage],
+    },
+    twitter: { card: "summary_large_image", images: [p.image?.src ?? ogImage.url] },
   };
 }
 
 export function ProjectPage({ lang, slug }: { lang: Lang; slug: string }) {
   const p = getProject(slug)!;
   const s = t[lang];
-  const other: Lang = lang === "tr" ? "en" : "tr";
+  const other = otherLang(lang);
   const idx = projects.indexOf(p);
   const next = projects[(idx + 1) % projects.length];
   const repoUrl = p.repo ? `${site.github}/${p.repo}` : undefined;

@@ -11,6 +11,9 @@ export const site = {
   location: { tr: "İstanbul · Uzaktan çalışmaya açık", en: "İstanbul · Open to remote worldwide" },
 };
 
+/** The other language of the two the site ships in. */
+export const otherLang = (lang: Lang): Lang => (lang === "tr" ? "en" : "tr");
+
 export const paths = {
   tr: { home: "/", project: (slug: string) => `/projeler/${slug}/` },
   en: { home: "/en/", project: (slug: string) => `/en/projects/${slug}/` },

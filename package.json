@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "npx serve out",
-    "model": "node scripts/add-model.mjs"
+    "model": "node scripts/add-model.mjs",
+    "meta-images": "node scripts/make-meta-images.mjs"
   },
   "dependencies": {
     "@react-three/drei": "10.7.9",
