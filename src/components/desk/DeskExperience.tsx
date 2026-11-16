@@ -101,7 +101,7 @@ export function DeskExperience({ lang }: { lang: Lang }) {
         <section className="desk-intro" role="alert">
           <p className="desk-kicker">{site.name}</p>
           <p>{d.noWebgl}</p>
-          <Link href={paths[lang].home} className="btn btn-primary">
+          <Link href={paths[lang].home} prefetch={false} className="btn btn-primary">
             {d.classic}
           </Link>
         </section>
@@ -112,10 +112,10 @@ export function DeskExperience({ lang }: { lang: Lang }) {
       )}
 
       <header className="desk-top">
-        <Link href={paths[lang].home} className="desk-chip">
+        <Link href={paths[lang].home} prefetch={false} className="desk-chip">
           ← {d.classic}
         </Link>
-        <Link href={deskPaths[other]} className="desk-chip" hrefLang={other}>
+        <Link href={deskPaths[other]} prefetch={false} className="desk-chip" hrefLang={other}>
           {other.toUpperCase()}
         </Link>
       </header>

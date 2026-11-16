@@ -55,7 +55,7 @@ export function Home({ lang }: { lang: Lang }) {
             <a href="#work" className="btn btn-primary">
               {s.ctaWork}
             </a>
-            <Link href={deskPaths[lang]} className="btn">
+            <Link href={deskPaths[lang]} prefetch={false} className="btn">
               {deskText[lang].welcome}
             </Link>
             <a href={site.linkedin} className="btn" target="_blank" rel="noreferrer">

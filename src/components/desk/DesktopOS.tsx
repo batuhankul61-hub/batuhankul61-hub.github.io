@@ -112,7 +112,7 @@ export function DesktopOS({ lang, onClose }: { lang: Lang; onClose: () => void }
             ))}
           </ul>
           <div className="os-actions">
-            <Link href={paths[lang].project(p.slug)} className="btn btn-primary">
+            <Link href={paths[lang].project(p.slug)} prefetch={false} className="btn btn-primary">
               {d.openProject}
             </Link>
             {p.repo && (
