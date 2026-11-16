@@ -146,6 +146,62 @@ function Controller({ p, c }: { p: V3; c: string }) {
   );
 }
 
+/** Gaming chair: five-star base on casters, gas lift, bucket seat and a tall back with red bolsters. */
+function Chair({ p, ry }: { p: V3; ry: number }) {
+  const shell = "#16161a";
+  const accent = "#b3262a";
+  return (
+    <group position={p} rotation={[0, ry, 0]}>
+      {Array.from({ length: 5 }, (_, i) => {
+        const a = (i / 5) * Math.PI * 2;
+        const x = Math.sin(a) * 0.3;
+        const z = Math.cos(a) * 0.3;
+        return (
+          <group key={i}>
+            <Tube a={[0, 0.1, 0]} b={[x, 0.065, z]} rad={0.018} c="#0c0c0e" />
+            <Ball p={[x, 0.03, z]} rad={0.028} c="#0c0c0e" s={[0.8, 1, 1.2]} />
+          </group>
+        );
+      })}
+      <Cyl p={[0, 0.1, 0]} rad={0.045} h={0.05} c="#0c0c0e" />
+      <Cyl p={[0, 0.2, 0]} rad={0.032} h={0.16} c="#1d1d21" rough={0.4} />
+      <Cyl p={[0, 0.34, 0]} rad={0.02} h={0.14} c="#8d8f94" rough={0.25} />
+      <B p={[0, 0.41, 0]} s={[0.22, 0.03, 0.22]} c="#0c0c0e" />
+      {/* Seat */}
+      <B p={[0, 0.47, 0]} s={[0.5, 0.08, 0.5]} c={shell} rough={0.75} />
+      <B p={[-0.2, 0.505, 0]} s={[0.08, 0.06, 0.48]} c={accent} rough={0.75} />
+      <B p={[0.2, 0.505, 0]} s={[0.08, 0.06, 0.48]} c={accent} rough={0.75} />
+      {/* Arms */}
+      {[-0.29, 0.29].map((x) => (
+        <group key={x}>
+          <B p={[x, 0.58, 0.02]} s={[0.035, 0.2, 0.05]} c="#0c0c0e" />
+          <B p={[x, 0.69, -0.01]} s={[0.075, 0.03, 0.26]} c="#0c0c0e" rough={0.6} />
+        </group>
+      ))}
+      {/* Back, leaning slightly away from the desk */}
+      <group position={[0, 0.5, 0.24]} rotation={[0.12, 0, 0]}>
+        <B p={[0, 0.36, 0]} s={[0.44, 0.68, 0.08]} c={shell} rough={0.75} />
+        <B p={[-0.19, 0.3, -0.03]} s={[0.08, 0.52, 0.08]} c={accent} rough={0.75} />
+        <B p={[0.19, 0.3, -0.03]} s={[0.08, 0.52, 0.08]} c={accent} rough={0.75} />
+        <B p={[0, 0.6, -0.055]} s={[0.22, 0.09, 0.05]} c="#0c0c0e" rough={0.8} />
+        <B p={[0, 0.2, -0.05]} s={[0.24, 0.12, 0.05]} c="#0c0c0e" rough={0.8} />
+        <B p={[0, 0.36, 0.041]} s={[0.06, 0.5, 0.004]} c={accent} rough={0.75} />
+      </group>
+    </group>
+  );
+}
+
+/** Sneaker box with a lid lip and a white end label, stacked under the desk. */
+function ShoeBox({ p, ry = 0, c = "#e0662a", lid = "#ec7a3c" }: { p: V3; ry?: number; c?: string; lid?: string }) {
+  return (
+    <group position={p} rotation={[0, ry, 0]}>
+      <B p={[0, 0.055, 0]} s={[0.34, 0.11, 0.22]} c={c} rough={0.8} />
+      <B p={[0, 0.112, 0]} s={[0.346, 0.03, 0.226]} c={lid} rough={0.8} />
+      <B p={[0.1, 0.05, 0.111]} s={[0.1, 0.05, 0.002]} c="#f2f0ea" rough={0.9} />
+    </group>
+  );
+}
+
 /* ---------- Room ---------- */
 
 type SpotApi = {
@@ -251,7 +307,7 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
   }, [interactive, setHover]);
 
   useFrame(({ clock }) => {
-    if (neonRef.current) neonRef.current.intensity = 3 + Math.sin(clock.elapsedTime * 2.3) * 0.12;
+    if (neonRef.current) neonRef.current.intensity = 0.9 + Math.sin(clock.elapsedTime * 2.3) * 0.04;
   });
 
   const api: SpotApi = { interactive, hover, setHover, onSelect, labels };
@@ -366,13 +422,16 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
       <B p={[-0.785, 0.42, 0.33]} s={[0.37, 0.02, 0.56]} map={wood} c="#ffffff" />
       <B p={[-0.8, 0.5, 0.33]} s={[0.27, 0.13, 0.3]} c="#b3262a" />
       <B p={[-0.82, 0.2, 0.33]} s={[0.2, 0.14, 0.28]} c="#3f8f4a" />
-      <B p={[-0.4, 0.2, 0.33]} s={[0.28, 0.4, 0.4]} c="#a98258" />
+      <ShoeBox p={[-0.38, 0, 0.36]} ry={0.06} />
+      <ShoeBox p={[-0.39, 0.125, 0.35]} ry={-0.05} c="#22252b" lid="#2f333b" />
       <B p={[0.79, 0.366, 0.33]} s={[0.02, 0.733, 0.6]} c="#f3f2ef" />
-      <B p={[0.15, 0.3, 0.1]} s={[1.26, 0.02, 0.2]} c="#f3f2ef" />
 
       {/* PC tower */}
       <group position={[0.5, 0.3, 0.36]}>
         <B p={[0, 0, 0]} s={[0.24, 0.5, 0.46]} c="#f2f2f4" rough={0.35} gloss={0.8} />
+        {[-0.09, 0.09].flatMap((x) =>
+          [-0.19, 0.19].map((z) => <Cyl key={`${x}${z}`} p={[x, -0.275, z]} rad={0.02} h={0.05} c="#1a1a1c" rough={0.6} />),
+        )}
         <B p={[0, 0.01, 0.232]} s={[0.2, 0.44, 0.004]} c="#0d0a14" rough={0.08} gloss={1} />
         {[
           [0.055, 0.13, "#ff5fd2"],
@@ -430,8 +489,6 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
       </group>
       <B p={[0.5, 0.77, 0.43]} s={[0.42, 0.004, 0.28]} c="#121214" rough={1} />
       <Ball p={[0.38, 0.787, 0.44]} rad={0.03} c="#0d0d0f" s={[1, 0.55, 1.6]} />
-      <Cyl p={[0.57, 0.778, 0.47]} rad={0.11} h={0.012} c="#f6f6f4" rough={0.25} />
-      <Cyl p={[0.57, 0.781, 0.47]} rad={0.075} h={0.012} c="#ecebe8" rough={0.25} />
       <Cyl p={[-0.3, 0.82, 0.3]} rad={0.05} h={0.1} c="#f4f3ee" />
       <B p={[-0.6, 0.778, 0.52]} s={[0.09, 0.02, 0.13]} c="#3b2a22" r={[0, 0.3, 0]} />
       <Cyl p={[-0.72, 0.805, 0.4]} rad={0.025} h={0.07} c="#2356c7" rough={0.3} />
@@ -449,8 +506,11 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
         <meshStandardMaterial color="#101014" />
       </mesh>
 
-      {/* Headphones and neon bolt */}
-      <group position={[0.86, 1.22, 0.07]}>
+      {/* Headphones on a wall hook, and the neon bolt */}
+      <B p={[0.86, 1.29, 0.008]} s={[0.035, 0.05, 0.012]} c="#1a1a1c" rough={0.4} />
+      <Tube a={[0.86, 1.285, 0.01]} b={[0.86, 1.285, 0.1]} rad={0.006} c="#1a1a1c" />
+      <Tube a={[0.86, 1.285, 0.1]} b={[0.86, 1.305, 0.106]} rad={0.006} c="#1a1a1c" />
+      <group position={[0.86, 1.205, 0.07]}>
         <mesh>
           <torusGeometry args={[0.09, 0.013, 16, 48, Math.PI]} />
           <meshStandardMaterial color="#141416" roughness={0.5} />
@@ -462,13 +522,21 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
           </group>
         ))}
       </group>
-      <group position={[1.04, 1.1, 0.03]}>
+      <group position={[1.08, 1.1, 0.03]}>
+        {/* Clear acrylic backplate with standoffs, like a real neon sign. */}
+        <mesh position={[0, 0, -0.012]}>
+          <planeGeometry args={[0.24, 0.6]} />
+          <meshPhysicalMaterial transparent opacity={0.12} roughness={0.1} clearcoat={1} color="#ffffff" />
+        </mesh>
+        {[[-0.1, 0.27], [0.1, 0.27], [-0.1, -0.27], [0.1, -0.27]].map(([x, y]) => (
+          <Cyl key={`${x}${y}`} p={[x, y, -0.02]} rad={0.006} h={0.02} c="#c9c9cc" r={[Math.PI / 2, 0, 0]} />
+        ))}
         {bolt.map((pt, i) => {
           const n = bolt[(i + 1) % bolt.length];
-          return <Tube key={i} a={[pt[0], pt[1], 0]} b={[n[0], n[1], 0]} rad={0.009} c="#ffe27a" e="#ffd23f" ei={2.2} />;
+          return <Tube key={i} a={[pt[0], pt[1], 0]} b={[n[0], n[1], 0]} rad={0.011} c="#ff9d1c" e="#ff9416" ei={1.15} />;
         })}
       </group>
-      <pointLight ref={neonRef} position={[1.0, 1.1, 0.22]} color="#ffb23f" intensity={3} distance={3.6} decay={1.5} />
+      <pointLight ref={neonRef} position={[1.08, 1.1, 0.16]} color="#ff9a2e" intensity={0.9} distance={1.1} decay={2} />
 
       {/* Pegboard with controllers */}
       <group position={[1.1, 1.74, 0.025]}>
@@ -501,14 +569,8 @@ function Room({ interactive, labels, screenTitle, screenIcons, onSelect, hover, 
         </group>
       </group>
 
-      {/* Chair, back to the camera */}
-      <group position={[-1.15, 0, 1.3]} rotation={[0, 0.7, 0]}>
-        <B p={[0, 0.48, 0]} s={[0.5, 0.09, 0.48]} c="#111114" rough={0.6} />
-        <B p={[0, 0.8, 0.24]} s={[0.46, 0.62, 0.09]} c="#121216" rough={0.6} r={[0.1, 0, 0]} />
-        <B p={[0, 1.02, 0.2]} s={[0.26, 0.12, 0.07]} c="#1b1b20" r={[0.1, 0, 0]} />
-        <Cyl p={[0, 0.25, 0]} rad={0.03} h={0.4} c="#0a0a0a" />
-        <Cyl p={[0, 0.04, 0]} rad={0.28} h={0.03} c="#0a0a0a" />
-      </group>
+      {/* Gaming chair, pushed back from the desk and turned a little */}
+      <Chair p={[-0.6, 0, 0.98]} ry={-1.2} />
 
       {/* Click targets */}
       <Hit api={api} spot="pc" p={[0.2, 1.065, 0.13]} s={[0.66, 0.4, 0.08]} />
