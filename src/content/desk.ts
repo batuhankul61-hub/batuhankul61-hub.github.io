@@ -94,6 +94,9 @@ export const spots: Record<Exclude<SpotId, "pc">, Spot> = {
   },
 };
 
+/** Hobbies shown in the classic site's Hobbies section, in display order. Kavunos (tv) is a project, so it is left out. */
+export const hobbyOrder: Exclude<SpotId, "pc" | "tv">[] = ["collection", "football", "music", "games", "gym"];
+
 export const deskText = {
   tr: {
     welcome: "Masama hoş geldin",

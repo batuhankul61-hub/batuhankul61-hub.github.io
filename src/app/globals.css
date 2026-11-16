@@ -556,6 +556,23 @@ p {
   margin-top: 14px;
 }
 
+/* ---------- Hobbies ---------- */
+.hobbies {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.hobby h3 {
+  margin: 8px 0 0;
+  font-size: 18px;
+}
+
+.hobby .muted {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
 /* ---------- About ---------- */
 .prose {
   align-content: start;

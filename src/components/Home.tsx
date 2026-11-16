@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { deskPaths, deskText } from "@/content/desk";
+import { deskPaths, deskText, hobbyOrder, spots } from "@/content/desk";
 import { projects } from "@/content/projects";
 import {
   certification,
@@ -191,6 +191,34 @@ export function Home({ lang }: { lang: Lang }) {
                 </ul>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section id="hobbies" className="section container">
+          <div className="section-head">
+            <h2>{s.hobbiesTitle}</h2>
+            <p className="muted">{s.hobbiesLead}</p>
+          </div>
+          <div className="hobbies">
+            {hobbyOrder.map((id) => {
+              const h = spots[id];
+              return (
+                <article key={h.id} className="stack-group hobby">
+                  <span className="mono-label">{h.label[lang]}</span>
+                  <h3>{h.title[lang]}</h3>
+                  <p className="muted">{h.body[lang]}</p>
+                  {h.items && (
+                    <ul className="chips">
+                      {h.items.map((x) => (
+                        <li key={x.name} title={x.note[lang]}>
+                          {x.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </article>
+              );
+            })}
           </div>
         </section>
 
